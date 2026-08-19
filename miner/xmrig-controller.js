@@ -17,6 +17,10 @@ function processAlive(pid) {
   if (!pid) return false;
   try { process.kill(Number(pid), 0); return true; } catch { return false; }
 }
+function restartHistoryForStart(current = {}, reason = 'user') {
+  if (reason === 'user') return [];
+  return Array.isArray(current.restartTimes) ? current.restartTimes.filter(Number.isFinite) : [];
+}
 
 function findFile(dir, name) {
   if (!fs.existsSync(dir)) return null;
@@ -109,7 +113,11 @@ class XMRigController extends EventEmitter {
     const out = fs.openSync(this.logFile, 'a');
     const args = ['-c', configFile, '--http-host=127.0.0.1', `--http-port=${this.apiPort}`, '--threads', String(built.profile.threads)];
     if (built.profile.affinity) args.push('--cpu-affinity', built.profile.affinity);
-    this.child = spawn(meta.exe, args, { cwd: path.dirname(meta.exe), stdio: ['ignore', out, out], windowsHide: true, detached: false });
+    try {
+      this.child = spawn(meta.exe, args, { cwd: path.dirname(meta.exe), stdio: ['ignore', out, out], windowsHide: true, detached: false });
+    } finally {
+      try { fs.closeSync(out); } catch {}
+    }
     const state = {
       pid: this.child.pid,
       desired: 'running',
@@ -117,7 +125,7 @@ class XMRigController extends EventEmitter {
       profile: built.profile,
       configFile,
       configHash: this.configManager.hash(built.config),
-      restartTimes: [],
+      restartTimes: restartHistoryForStart(current, reason),
       reason
     };
     this.writeJson(this.stateFile, state);
@@ -147,7 +155,6 @@ class XMRigController extends EventEmitter {
   pause() {
     const s = this.state();
     if (!s.processRunning) { s.desired = 'paused'; this.writeJson(this.stateFile, s); return s; }
-    // Windows has no portable safe suspend API in stock Node. Pause is an explicit stop/resume cycle.
     s.desired = 'paused'; s.pausedAt = Date.now();
     this.killPid(s.pid); s.pid = null; this.writeJson(this.stateFile, s);
     this.child = null; this.emit('pause', s); return s;
@@ -222,4 +229,4 @@ class XMRigController extends EventEmitter {
   }
 }
 
-module.exports = { XMRigController, STOCK, processAlive };
+module.exports = { XMRigController, STOCK, processAlive, restartHistoryForStart };
