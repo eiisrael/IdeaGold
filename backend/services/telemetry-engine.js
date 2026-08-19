@@ -1,0 +1,38 @@
+'use strict';
+const {EventEmitter}=require('events');
+const os=require('os');
+const {mean,clamp}=require('../lib/utils');
+const Stats=require('../optimizer/statistics');
+const Mind=require('../optimizer/supreme-mind');
+const Profit=require('./profit-engine');
+
+function quantizeIncrement(target){
+  if(!(target>0))return null;const exp=Math.floor(Math.log10(target)),base=10**exp,m=target/base;const q=m<=1?1:m<=2?2:m<=5?5:10;return clamp(q*base,1e-10,1e-3);
+}
+class TelemetryEngine extends EventEmitter{
+  constructor({miner,hardware,pool,market,store,getSettings,getSession,getWorkers=()=>({online:0,hashrate:0,powerWatts:0,cloudCostBrlDay:0})}){super();this.miner=miner;this.hardware=hardware;this.pool=pool;this.market=market;this.store=store;this.getSettings=getSettings;this.getSession=getSession;this.getWorkers=getWorkers;this.timer=null;this.latest=null;this.poolCache={at:0,value:null};this.netCache={at:0,value:null};this.lastPersist=0;this.active=false;}
+  async poolStats(settings){if(Date.now()-this.poolCache.at<10_000)return this.poolCache.value;const value=settings.poolMode==='moneroocean'?await this.pool.stats(settings.wallet):{available:false,reason:'P2Pool local balance not exposed by configured adapter'};this.poolCache={at:Date.now(),value};return value;}
+  async network(){if(Date.now()-this.netCache.at<30_000)return this.netCache.value;const value=await this.pool.network();this.netCache={at:Date.now(),value};return value;}
+  power(settings,hw,miner){
+    if(Number(settings.measuredPowerWatts)>0)return {watts:Number(settings.measuredPowerWatts),source:'information provided by user',status:'W reais informados',tempC:hw.sensors.cpuTempC};
+    if(hw.sensors.connected&&Number(hw.sensors.cpuPowerW)>0){const watts=Number(hw.sensors.cpuPowerW)+Number(settings.estimatedBaseWatts||0);return {watts,source:'LibreHardwareMonitor CPU sensor + estimated base',status:'estimado híbrido',tempC:hw.sensors.cpuTempC};}
+    if(!miner.process.alive)return {watts:0,source:'none',status:'miner stopped',tempC:hw.sensors.cpuTempC};
+    const logical=os.cpus().length||1,threads=Number(miner.process.threads||1);const watts=Number(settings.estimatedBaseWatts||30)+Number(settings.estimatedCpuWatts||75)*clamp(threads/logical,0.2,1);return {watts,source:'hardware profile estimate',status:'W estimados',tempC:hw.sensors.cpuTempC};
+  }
+  async snapshot(){
+    const settings=this.getSettings();const session=this.getSession();const workers=this.getWorkers();const [miner,hw,pool,network,market]=await Promise.all([this.miner.telemetry(),this.hardware.snapshot(),this.poolStats(settings),this.network(),this.market.get()]);
+    const power=this.power(settings,hw,miner);const poolFresh=pool?.available&&pool.lastShareTs&&(Date.now()/1000-(pool.lastShareTs>1e12?pool.lastShareTs/1000:pool.lastShareTs)<900);const localFallback=Number(miner.hash60||miner.hash10||0)+Number(workers.hashrate||0);const effectiveHash=poolFresh&&pool.hashrate>0?pool.hashrate:localFallback;const rate=network?.available?Profit.networkXmrPerSec(effectiveHash,network.difficulty,network.rewardXmr,settings.poolFeePct):0;
+    const history=this.store.recentTelemetry(180);const hashes=history.map(r=>r.hash10).filter(v=>v>0);const hashStats=Stats.stability(hashes.concat(miner.hash10>0?[miner.hash10]:[]));const runtimeSec=miner.process.startedAt?Math.max(0,(Date.now()-new Date(miner.process.startedAt).getTime())/1000):0;const totalShares=(pool?.accepted||miner.accepted||0)+(pool?.rejected||miner.rejected||0);const conf=Stats.etaConfidence({runtimeSec,shares:totalShares,hashCv:hashStats.cv,poolFresh:Boolean(poolFresh),samples:history.length});const share=Stats.shareEta(miner.hash10,miner.difficulty,totalShares,runtimeSec,hashStats.cv);
+    const totalXmr=(pool?.dueXmr||0)+(pool?.paidXmr||0);const sessionEarned=session?Math.max(0,totalXmr-Number(session.startTotalXmr||0)):0;const increment=quantizeIncrement(rate*900);const nextProduction=rate>0&&increment?{available:true,amountXmr:increment,expectedSec:increment/rate,lowSec:increment/rate*0.65,highSec:increment/rate*1.6,confidence:conf,kind:'statistical-estimate'}:{available:false,reason:'aguardando taxa observável'};
+    const totalWatts=Number(power.watts||0)+Number(workers.powerWatts||0);const projection=(rate>0&&market.brl>0)?Profit.project({xmrPerSec:rate,priceBrl:market.brl,watts:totalWatts,kwhBrl:settings.electricityBrlKwh,cloudBrlDay:Number(workers.cloudCostBrlDay||0)}):null;if(projection&&network?.available)projection.breakEvenHashrate=Profit.breakEvenHashrate({difficulty:network.difficulty,rewardXmr:network.rewardXmr,feePct:settings.poolFeePct,priceBrl:market.brl,watts:totalWatts,kwhBrl:settings.electricityBrlKwh,cloudBrlDay:Number(workers.cloudCostBrlDay||0)});const eff=Profit.efficiency({hashrate:effectiveHash,watts:totalWatts,xmrPerSec:rate});const rejectTotal=miner.accepted+miner.rejected;const rejectRate=rejectTotal?miner.rejected/rejectTotal:0;
+    const health=Mind.healthScore({mining:miner.process.alive&&miner.hash10>0,hashrates:hashes.slice(-60).concat(miner.hash10||[]),rejectRate,tempC:power.tempC,hugePages:miner.hugePages??null,msr:miner.diagnostics?.msr==='ok'?true:miner.diagnostics?.msr==='error'?false:null,poolOnline:pool?.available!==false,restarts:miner.process.restarts||0});
+    const anomalies=Mind.detectAnomalies({hash10:miner.hash10,tempC:power.tempC,rejectRate},history,{criticalTemp:settings.thermalCriticalC});
+    const snap={at:Date.now(),status:miner.process.alive?(miner.hash10>0?'MINERANDO':'INICIALIZANDO'):(miner.process.desired==='paused'?'PAUSADO':'PARADO'),settings:{...settings,wallet:undefined},miner,hardware:hw,power:{...power,totalWatts},workers,pool,poolFresh:Boolean(poolFresh),network,market,effectiveHashrate:effectiveHash,rate:{xmrPerSec:rate,xmrPerHour:rate*3600,source:poolFresh?'pool-normalized-hash + network':'local-hash + network',confidence:conf},shares:{accepted:miner.accepted,rejected:miner.rejected,stale:pool?.stale??null,total:miner.accepted+miner.rejected,shareEta:share,lastShareTs:pool?.lastShareTs||null},session:{id:session?.id||null,startedAt:session?.startedAt||null,earnedXmrReal:sessionEarned,startTotalXmr:session?.startTotalXmr||0},production:nextProduction,profit:projection,efficiency:eff,health,anomalies,dataQuality:{temperature:power.tempC==null?'indisponível':hw.sensors.connected?'real sensor':'indisponível',power:power.status,pool:pool?.available?'real API':'API desconectada',market:market.status,network:network?.available?'real API':'API desconectada'}};
+    this.latest=snap;
+    if(Date.now()-this.lastPersist>=10_000){this.lastPersist=Date.now();this.store.addTelemetry({ts:snap.at,sessionId:session?.id,hash10:miner.hash10,hash60:miner.hash60,hash15:miner.hash15,poolHash:poolFresh?pool.hashrate:0,accepted:miner.accepted,rejected:miner.rejected,stale:pool?.stale||0,cpuLoad:hw.cpuLoadPct,tempC:power.tempC,watts:power.watts,powerSource:power.source,efficiency:eff.hashPerWatt,xmrDue:pool?.dueXmr||0,xmrPaid:pool?.paidXmr||0,xmrPriceBrl:market.brl,difficulty:network?.difficulty,algo:miner.algo});if(pool?.available)this.store.pool(pool);for(const a of anomalies)this.store.alert(a);}
+    this.emit('snapshot',snap);return snap;
+  }
+  start(){if(this.timer)return;this.active=true;const run=async()=>{if(!this.active)return;try{await this.snapshot();}catch(e){this.store.log('system','error','Falha de telemetria',{error:e.message});}finally{if(this.active)this.timer=setTimeout(run,Math.max(2000,Number(this.getSettings().telemetryIntervalMs||5000)));}};run();}
+  stop(){this.active=false;if(this.timer)clearTimeout(this.timer);this.timer=null;}
+}
+module.exports={TelemetryEngine,quantizeIncrement};
