@@ -102,7 +102,7 @@ function healthScore(s){
 }
 function publicStatus(sample=telemetry.snapshot()){
   const s=sample||{state:'starting'};
-  return{version:VERSION,state:s.state||'starting',settings:{...settings,wallet:settings.wallet?`${settings.wallet.slice(0,10)}…${settings.wallet.slice(-10)}`:'',profile:settings.profile},hardware:hardwareStatic,telemetry:s,supreme:supreme.snapshot(),benchmark:benchmark.status(),profiles:db.listProfiles().map(parseProfileRow),workers:workers.summary(),alerts:db.activeAlerts(),health:healthScore(s)};
+  return{version:VERSION,state:s.state||'starting',settings:{...settings,wallet:settings.wallet,profile:settings.profile},hardware:hardwareStatic,telemetry:s,supreme:supreme.snapshot(),benchmark:benchmark.status(),profiles:db.listProfiles().map(parseProfileRow),workers:workers.summary(),alerts:db.activeAlerts(),health:healthScore(s)};
 }
 function tailFile(file,max=120000){try{const st=fs.statSync(file),len=Math.min(max,st.size),fd=fs.openSync(file,'r'),buf=Buffer.alloc(len);fs.readSync(fd,buf,0,len,st.size-len);fs.closeSync(fd);return buf.toString('utf8').replace(/\x1b\[[0-9;]*m/g,'');}catch{return'';}}
 
@@ -141,6 +141,7 @@ const server=http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
     if(req.method==='GET'&&serveStatic(res,url.pathname))return;
+    if(req.method==='GET'&&url.pathname.startsWith('/api/')&&url.pathname!='/api/health')requireLocal(req);
     if(req.method==='GET'&&url.pathname==='/api/events'){
       res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive','x-accel-buffering':'no'});res.write('retry: 3000\n\n');sseClients.add(res);req.on('close',()=>sseClients.delete(res));return;
     }
@@ -155,7 +156,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET'&&url.pathname==='/api/profiles')return sendJson(res,200,{profiles:db.listProfiles().map(parseProfileRow)});
     if(req.method==='GET'&&url.pathname==='/api/profiles/export')return sendJson(res,200,{format:'IdeaGoldProfiles/1',exportedAt:Date.now(),hardwareFingerprint:hardwareStatic.fingerprint,profiles:db.listProfiles().map(parseProfileRow)});
     if(req.method==='GET'&&url.pathname==='/api/pools')return sendJson(res,200,{pools:await poolStatuses(),selected:settings.poolId});
-    if(req.method==='GET'&&url.pathname==='/api/logs'){requireLocal(req);const kind=url.searchParams.get('kind')||'mining';const files={mining:path.join(ROOT,'runtime','xmrig-v5.log'),config:path.join(ROOT,'runtime','config-audit.jsonl')};return sendJson(res,200,{kind,text:tailFile(files[kind]||files.mining)});}
+    if(req.method==='GET'&&url.pathname==='/api/logs'){const kind=url.searchParams.get('kind')||'mining';const files={mining:path.join(ROOT,'runtime','xmrig-v5.log'),config:path.join(ROOT,'runtime','config-audit.jsonl')};return sendJson(res,200,{kind,text:tailFile(files[kind]||files.mining)});}
     if(req.method==='POST'&&url.pathname==='/api/workers/heartbeat')return handleWorkerHeartbeat(req,res);
 
     if(req.method==='POST'){requireLocal(req);const body=await readBody(req);
