@@ -56,5 +56,5 @@ echo   IdeaGold 4.0 - GoldBrain
 echo   Feche esta janela para parar o painel.
 echo ==========================================
 echo.
-node server.js
+node server-v4.js
 pause
