@@ -4,10 +4,24 @@
 
 Em uso real foram observados dois sintomas:
 
-1. valores de pool/preço apareciam e depois voltavam para `—`;
+1. valores de pool/preço/hash apareciam e depois voltavam para `—`;
 2. o XMRig podia ficar parado sem a interface explicar claramente por quê.
 
-## Causa 1 — valores desaparecendo
+## Causa 1 — contrato SSE incorreto
+
+A revisão encontrou uma causa direta para o efeito visual “aparece → some → aparece”. O backend V5.0 emitia no evento SSE `telemetry` o objeto de **status inteiro**, mas o frontend tratava o payload como se fosse apenas a **amostra de telemetria** e o colocava em `state.status.telemetry`.
+
+Isso produzia uma estrutura aninhada temporariamente no lugar errado. O render ao vivo podia então procurar `hash10s`, `pool`, `market` etc. no nível incorreto e mostrar `—`. No refresh HTTP seguinte, `/api/status` reconstruía a estrutura correta e os valores reapareciam.
+
+### Correção
+
+A V5.1 possui um contrato explícito em `backend/contracts.js`:
+
+- evento `telemetry` envia **somente a amostra de telemetria**;
+- `/api/status` continua enviando o status completo;
+- teste automatizado rejeita payload SSE com propriedade `telemetry` aninhada.
+
+## Causa 2 — falhas transitórias apagavam a última leitura válida
 
 Na V5.0, uma consulta temporariamente malsucedida podia substituir imediatamente o último objeto válido da fonte por `{available:false}`. Isso fazia a UI apagar dados que haviam sido válidos segundos antes.
 
@@ -27,13 +41,13 @@ Janelas de retenção:
 - network: 15 min;
 - market: 30 min.
 
-Valor retido recebe `cached/stale/staleSec/sourceError`. Não é chamado de ao vivo.
+Valor retido recebe `cached/stale/staleSec/sourceError`. Não é chamado de ao vivo. O crescimento observado do pool só adiciona **um ponto por refresh real**, evitando que um mesmo snapshot em cache aumente artificialmente a confiança da ETA.
 
-## Causa 2 — ticks sobrepostos
+## Causa 3 — ticks sobrepostos
 
 Chamadas de PowerShell e APIs podem demorar mais do que o intervalo normal do loop. A V5.1 impede um segundo `tick()` enquanto o anterior estiver em execução.
 
-## Causa 3 — encerramento inesperado do XMRig
+## Causa 4 — encerramento inesperado do XMRig
 
 O Controller agora registra:
 
@@ -46,7 +60,7 @@ O Controller agora registra:
 - trecho final do log XMRig;
 - falha/recovery da API local.
 
-`pause-on-battery` deixou de ser opt-out e passou a ser **opt-in**. O valor padrão é `false`.
+`pause-on-battery` deixou de ser opt-out e passou a ser **opt-in**. O valor padrão é `false`. Na primeira execução da V5.1, configurações V5 antigas são migradas com `pauseOnBattery=false` e Scheduler desativado para que um comportamento legado não cause parada automática inesperada.
 
 ## Watchdog V5.1
 
@@ -127,7 +141,7 @@ GPU é opt-in/benchmark-driven. O GPU Tuner executa:
 
 `probe → CPU baseline → OpenCL candidate → safety → objective comparison → winner/rollback`
 
-Nenhum ganho é presumido pela simples existência da RX/AMD/OpenCL.
+Nenhum ganho é presumido pela simples existência de AMD/OpenCL.
 
 ## Sensores
 
@@ -135,4 +149,4 @@ LibreHardwareMonitor pode ser detectado via WMI ou REST local. Potência de comp
 
 ## Scheduler
 
-Scheduler é desligado por padrão. Só uma ação explícita do usuário permite pausas por horário/lucro. Apenas pausas iniciadas pelo Scheduler podem ser retomadas automaticamente por ele.
+Scheduler é desligado por padrão e funciona como **pausa/retomada**, não como início inesperado de mineração. Só uma ação explícita do usuário habilita pausas por horário/lucro. Apenas pausas iniciadas pelo Scheduler podem ser retomadas automaticamente por ele; ao desativar o Scheduler, uma pausa causada por ele é devolvida ao controle manual.
