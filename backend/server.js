@@ -93,7 +93,7 @@ function parseProfileRow(row){if(!row)return null;return{...row,config:JSON.pars
 function healthScore(s){
   if(!s)return{score:null,parts:[],reason:'aguardando telemetria'};
   const parts=[];const add=(name,value,detail)=>parts.push({name,value,detail});
-  add('XMRig',s.miner?.apiConnected?1:(s.miner?.processRunning?.4:.7),s.miner?.apiConnected?'API local OK':s.miner?.processRunning?'processo sem API':'parado');
+  add('XMRig',s.miner?.apiConnected?1:(s.miner?.processRunning?0.4:0),s.miner?.apiConnected?'API local OK':s.miner?.processRunning?'processo sem API':'parado');
   add('Pool',s.pool?.available?(s.pool?.fresh?1:.7):.3,s.pool?.available?(s.pool?.fresh?'recente':'sem share recente'):'API indisponível');
   const rr=(Number(s.session?.accepted||0)+Number(s.session?.rejected||0))>0?Number(s.session?.rejected||0)/(Number(s.session.accepted)+Number(s.session.rejected)):0;add('Shares',Math.max(0,1-rr/.05),`${(rr*100).toFixed(2)}% rejeição`);
   if(s.hardware?.temperatureC!=null){const warn=Number(settings.thermalWarningC);add('Temperatura',Math.max(0,1-Math.max(0,s.hardware.temperatureC-warn+10)/25),`${Number(s.hardware.temperatureC).toFixed(1)}°C`);}
