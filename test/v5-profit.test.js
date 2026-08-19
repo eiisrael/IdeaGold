@@ -1,0 +1,2 @@
+'use strict';const assert=require('assert');const P=require('../optimizer/profit-engine');
+const p=P.calculate({xmrPerHour:.000004,priceBrl:2100,watts:105,idleWatts:45,costMode:'full',tariff:1.6,hashrate:1000});assert(p.energyDayBrl>p.grossDayBrl);assert(p.netDayBrl<0);assert(p.breakEvenXmrPrice>2100);const i=P.calculate({xmrPerHour:.000004,priceBrl:2100,watts:105,idleWatts:45,costMode:'incremental',tariff:1.6,hashrate:1000});assert(i.energyDayBrl<p.energyDayBrl);assert.strictEqual(i.billableWatts,60);assert(P.rows(p).length===4);console.log('v5 profit: OK');
