@@ -17,17 +17,23 @@ function defaults(hardware){
     pauseCpuLoadPct:0,resumeAfterMinutes:5,p2poolHost:'127.0.0.1',p2poolPort:3333,p2poolDataApi:'',p2poolSidechain:'mini',
     privacy:{localOnly:true,externalTelemetry:false},
     scheduler:{enabled:false,start:'00:00',stop:'00:00',stopWhenNegative:false,minNetBrlDay:0},
-    observability:{level:'info',retainDays:30},
-    gpuAutoBenchmark:false
+    observability:{level:'info',retainDays:30},gpuAutoBenchmark:false,_v51Migrated:true
   };
 }
 
 function validTime(v){return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||''));}
 class SettingsStore{
   constructor(db,hardware){this.db=db;this.hardware=hardware;this.key='settings-v5';}
-  get(){const d=defaults(this.hardware),saved=this.db.getSetting(this.key,{})||{};return{...d,...saved,profile:normalizeConfig({...d.profile,...(saved.profile||{})}),scheduler:{...d.scheduler,...(saved.scheduler||{})},observability:{...d.observability,...(saved.observability||{})}};}
+  get(){
+    const d=defaults(this.hardware);let saved=this.db.getSetting(this.key,{})||{};
+    if(!saved._v51Migrated){
+      saved={...saved,_v51Migrated:true,profile:{...(saved.profile||{}),pauseOnBattery:false},scheduler:{...d.scheduler,...(saved.scheduler||{}),enabled:false}};
+      this.db.setSetting(this.key,saved);
+    }
+    return{...d,...saved,profile:normalizeConfig({...d.profile,...(saved.profile||{})}),scheduler:{...d.scheduler,...(saved.scheduler||{})},observability:{...d.observability,...(saved.observability||{})}};
+  }
   update(input={}){
-    const old=this.get();const next={...old,...input};
+    const old=this.get();const next={...old,...input,_v51Migrated:true};
     if(input.wallet!==undefined){const w=String(input.wallet||'').trim();if(w&&!validWallet(w))throw new Error('Carteira XMR inválida.');next.wallet=w;}
     if(input.profile)next.profile=normalizeConfig({...old.profile,...input.profile});else next.profile=normalizeConfig(old.profile);
     next.workerName=String(next.workerName||'IdeaGold').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,32)||'IdeaGold';
@@ -44,10 +50,8 @@ class SettingsStore{
     next.benchmarkWarmupSec=Math.max(10,Math.min(600,Math.round(Number(next.benchmarkWarmupSec||20))));
     next.benchmarkSampleSec=Math.max(30,Math.min(1800,Math.round(Number(next.benchmarkSampleSec||60))));
     next.maxAutotuneExperiments=Math.max(1,Math.min(12,Math.round(Number(next.maxAutotuneExperiments||4))));
-    const sc={...old.scheduler,...(input.scheduler||{})};
-    sc.enabled=Boolean(sc.enabled);sc.start=validTime(sc.start)?sc.start:'00:00';sc.stop=validTime(sc.stop)?sc.stop:'00:00';sc.stopWhenNegative=Boolean(sc.stopWhenNegative);sc.minNetBrlDay=Math.max(-100000,Math.min(100000,Number(sc.minNetBrlDay||0)));next.scheduler=sc;
-    next.gpuAutoBenchmark=Boolean(next.gpuAutoBenchmark);
-    this.db.setSetting(this.key,next);return next;
+    const sc={...old.scheduler,...(input.scheduler||{})};sc.enabled=Boolean(sc.enabled);sc.start=validTime(sc.start)?sc.start:'00:00';sc.stop=validTime(sc.stop)?sc.stop:'00:00';sc.stopWhenNegative=Boolean(sc.stopWhenNegative);sc.minNetBrlDay=Math.max(-100000,Math.min(100000,Number(sc.minNetBrlDay||0)));next.scheduler=sc;
+    next.gpuAutoBenchmark=Boolean(next.gpuAutoBenchmark);this.db.setSetting(this.key,next);return next;
   }
 }
 module.exports={SettingsStore,defaults,validTime};
