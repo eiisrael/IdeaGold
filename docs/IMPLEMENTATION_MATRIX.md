@@ -4,16 +4,20 @@
 |---|---|---|
 | XMRig controller | XMRig | IMPLEMENTADO |
 | checksum/supply chain XMRig | XMRig / hardening | IMPLEMENTADO |
+| pré-validação DNS/TLS da pool antes do start | diagnóstico V5.1.1 | IMPLEMENTADO |
+| fallback MoneroOcean gulf → sg quando o endpoint principal falha | MoneroOcean oficial | IMPLEMENTADO com probe; sem IP fixo |
 | CPU fingerprint | RigForge | IMPLEMENTADO |
 | config generated/user/safe | RigForge / Pithead | IMPLEMENTADO |
 | telemetria 10s/60s/15m | XMRig | IMPLEMENTADO |
 | cache Last Known Good de pool/rede/preço | requisito de estabilidade | IMPLEMENTADO |
+| stale shares separado de sourceStale/cache | correção V5.1.1 | IMPLEMENTADO |
 | lock contra ticks sobrepostos | requisito de estabilidade | IMPLEMENTADO |
 | shares/pool balance | MoneroOcean | IMPLEMENTADO |
 | ganho real da sessão | requisito IdeaGold | IMPLEMENTADO |
 | baseline pendente quando pool está offline | correção de consistência | IMPLEMENTADO |
 | sessão preservada durante auto-recovery | correção de consistência | IMPLEMENTADO |
 | SQLite histórico | Pithead / arquitetura solicitada | IMPLEMENTADO |
+| regressão SQLite boolean parameter 8 | diagnóstico em hardware real | CORRIGIDA + TESTE AUTOMÁTICO |
 | Market provider fallback | IdeaGold V4/V5 | IMPLEMENTADO |
 | energia medida/estimada/híbrida | Efficiency Lab + LibreHardwareMonitor | IMPLEMENTADO com fonte explícita |
 | Profit Engine + break-even | MineROI-Net (conceito econômico) | IMPLEMENTADO de forma própria |
@@ -57,4 +61,5 @@ Nenhum recurso condicionado ao hardware aparece como sucesso antes do teste real
 - OpenCL detectado não significa GPU lucrativa; o A/B precisa vencer o CPU-only;
 - LibreHardwareMonitor pode fornecer potência de componentes, mas somente wattímetro/sensor explícito é chamado de potência medida na tomada;
 - P2Pool instalado não significa pronto para mineração sem `monerod` RPC 18081 + ZMQ 18083;
-- ML local não decide antes do dataset mínimo.
+- ML local não decide antes do dataset mínimo;
+- pool só é considerada utilizável no start depois de DNS/TLS real; se nenhum endpoint funcionar, o usuário recebe erro em vez de estado falso de mineração.
