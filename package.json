@@ -1,8 +1,8 @@
 {
   "name": "ideagold",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
-  "description": "IdeaGold 4.0 GoldBrain: mineração XMR em um clique, auto-switch MoneroOcean, CPU/GPU, workers e estimativa híbrida de lucro.",
+  "description": "IdeaGold 4.1 GoldBrain Real: mineração XMR em um clique com estado real, ETA dinâmica, fallback de preço, CPU otimizada e workers autorizados.",
   "main": "server-v4.js",
   "scripts": {
     "start": "node server-v4.js",
