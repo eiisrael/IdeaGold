@@ -9,9 +9,8 @@
     "dev": "node --watch backend/server.js",
     "worker": "node worker-agent.js",
     "check": "node scripts/check.js",
-    "test": "node tests/run.js",
-    "test:smoke": "node tests/smoke-server.js",
-    "legacy:test": "node test/goldbrain.test.js"
+    "test": "node tests/run.js && node tests/workers.js",
+    "test:smoke": "node tests/smoke-server.js"
   },
   "engines": {
     "node": ">=22.5.0"
