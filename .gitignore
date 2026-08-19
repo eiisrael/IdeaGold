@@ -1,9 +1,10 @@
 node_modules/
 .env
 runtime/
-data/user.json
-data/workers.json
-data/state.json
-data/audit.ndjson
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 *.log
+*.bak
 .DS_Store
