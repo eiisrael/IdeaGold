@@ -12,6 +12,7 @@ const {normalizeConfig}=require('../miner/config-manager');
 const {IdeaGoldDB}=require('../database/db');
 const {niceQuantum,slopeRate}=require('../telemetry/engine');
 const {defaults}=require('../backend/settings');
+const {telemetrySsePayload,isTelemetrySsePayload}=require('../backend/contracts');
 const {insideWindow}=require('../optimizer/scheduler-engine');
 const {LocalMLPredictor}=require('../optimizer/ml-predictor');
 const {chooseSensors}=require('../providers/hardware/libre-hardware-monitor');
@@ -29,6 +30,7 @@ test('profit engine calcula break-even',()=>{const x=P.economics({xmrPerSec:1e-8
 test('config é bounded e pause-on-battery é opt-in',()=>{const c=normalizeConfig({threads:999,priority:99,scratchpadPrefetch:9});assert.equal(c.threads,256);assert.equal(c.priority,5);assert.equal(c.scratchpadPrefetch,1);assert.equal(c.pauseOnBattery,false);assert.equal(c.gpuMode,'off');});
 test('settings detecta i5-4670K e limita threads',()=>{const d=defaults({logicalThreads:4,cpuModel:'Intel(R) Core(TM) i5-4670K CPU @ 3.40GHz'});assert.equal(d.profile.threads,3);assert.equal(d.logicalThreads,4);assert.equal(d.scheduler.enabled,false);});
 test('settings funciona com cpuModel ausente',()=>{const d=defaults({logicalThreads:4});assert(d.profile.threads>=1&&d.profile.threads<=4);});
+test('SSE telemetry entrega amostra e não status aninhado',()=>{const sample={ts:Date.now(),state:'mining',miner:{apiConnected:true},hash10s:950};const payload=telemetrySsePayload(sample);assert.strictEqual(payload,sample);assert.equal(isTelemetrySsePayload(payload),true);assert.equal(isTelemetrySsePayload({ts:sample.ts,state:'mining',telemetry:sample}),false);});
 test('safety rejeita threads acima do hardware',()=>{const s=new SafetyEngine();assert.equal(s.validateCandidate({threads:5,priority:3,randomxMode:'fast'},{logicalThreads:4}).ok,false);});
 test('pool score explicita ausência',()=>{const s=scorePool({available:true,latencyMs:30,feePct:0});assert(s.score>0);assert(s.missing.includes('rejects'));});
 test('Bayesian optimizer sugere candidato não testado',()=>{const gp=new GaussianProcessOptimizer({threads:{min:1,max:4}});const a={threads:1,priority:3,yield:true,hugePages:true,hugePagesJit:true,numa:true,scratchpadPrefetch:1},b={...a,threads:2},c={...a,threads:3};const r=gp.suggest([{config:a,value:1},{config:b,value:2}],[a,b,c]);assert.equal(r.config.threads,3);});
