@@ -11,6 +11,7 @@ const {scorePool}=require('../providers/pool/score');
 const {normalizeConfig}=require('../miner/config-manager');
 const {IdeaGoldDB}=require('../database/db');
 const {niceQuantum,slopeRate}=require('../telemetry/engine');
+const {defaults}=require('../backend/settings');
 
 let passed=0;
 function test(name,fn){try{fn();passed++;console.log(`OK ${name}`);}catch(e){console.error(`FAIL ${name}`);throw e;}}
@@ -21,6 +22,8 @@ test('intervalo exponencial é probabilístico',()=>{const x=S.exponentialInterv
 test('custo energia 100W 24h',()=>{const e=P.energyCost(100,1,86400);approx(e.kwh,2.4);approx(e.brl,2.4);});
 test('profit engine calcula break-even',()=>{const x=P.economics({xmrPerSec:1e-8,priceBrl:2000,powerW:100,electricityBrlKWh:.9,hashrate:1000,difficulty:1e12,reward:.6,poolFeePct:0});assert(x.available);assert(x.rows.day.netBrl<x.rows.day.revenueBrl);assert(Number.isFinite(x.breakEven.electricityBrlKWh));});
 test('config é bounded',()=>{const c=normalizeConfig({threads:999,priority:99,scratchpadPrefetch:9});assert.equal(c.threads,256);assert.equal(c.priority,5);assert.equal(c.scratchpadPrefetch,1);});
+test('settings detecta i5-4670K e limita threads',()=>{const d=defaults({logicalThreads:4,cpuModel:'Intel(R) Core(TM) i5-4670K CPU @ 3.40GHz'});assert.equal(d.profile.threads,3);assert.equal(d.logicalThreads,4);});
+test('settings funciona com cpuModel ausente',()=>{const d=defaults({logicalThreads:4});assert(d.profile.threads>=1&&d.profile.threads<=4);});
 test('safety rejeita threads acima do hardware',()=>{const s=new SafetyEngine();assert.equal(s.validateCandidate({threads:5,priority:3,randomxMode:'fast'},{logicalThreads:4}).ok,false);});
 test('pool score explicita ausência',()=>{const s=scorePool({available:true,latencyMs:30,feePct:0});assert(s.score>0);assert(s.missing.includes('rejects'));});
 test('Bayesian optimizer sugere candidato não testado',()=>{const gp=new GaussianProcessOptimizer({threads:{min:1,max:4}});const a={threads:1,priority:3,yield:true,hugePages:true,hugePagesJit:true,numa:true,scratchpadPrefetch:1},b={...a,threads:2},c={...a,threads:3};const r=gp.suggest([{config:a,value:1},{config:b,value:2}],[a,b,c]);assert.equal(r.config.threads,3);});
