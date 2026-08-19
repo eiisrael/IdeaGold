@@ -12,7 +12,7 @@ function slopeRate(rows){const good=(rows||[]).filter(r=>Number.isFinite(Number(
 class TelemetryEngine extends EventEmitter{
   constructor({db,controller,hardware,power,market,poolRegistry,getSettings,anomaly,logger=null}){
     super();Object.assign(this,{db,controller,hardware,power,market,poolRegistry,getSettings,anomaly,logger});
-    this.current=null;this.timer=null;this.busy=false;this.session=null;this.poolSeries=[];this.lastRecorded=0;this.lastAlerts=new Map();this.lastState=null;
+    this.current=null;this.timer=null;this.busy=false;this.session=null;this.poolSeries=[];this.lastPoolSeriesGoodAt=0;this.lastRecorded=0;this.lastAlerts=new Map();this.lastState=null;
     this.sources={pool:this.slot(),network:this.slot(),market:this.slot()};
   }
   slot(){return{value:null,lastGoodAt:0,lastAttemptAt:0,lastError:null,failures:0};}
@@ -32,8 +32,8 @@ class TelemetryEngine extends EventEmitter{
         this.logger?.throttle(`source-${name}`,30000,()=>this.logger?.warn('telemetry',`${name}-failure`,`Falha temporária na fonte ${name}; último valor válido será preservado dentro da janela segura.`,{error:error.message,failures:slot.failures,lastGoodAgeSec:slot.lastGoodAt?Math.round((Date.now()-slot.lastGoodAt)/1000):null}));
       }
     }
-    if(slot.value&&now-slot.lastGoodAt<=maxStaleMs){const age=now-slot.lastGoodAt;return{...slot.value,available:true,cached:age>intervalMs*1.5||Boolean(slot.lastError),stale:Boolean(slot.lastError)||age>maxStaleMs*.5,staleSec:Math.round(age/1000),sourceError:slot.lastError,_freshFetch:!slot.lastError&&age<Math.min(intervalMs,8000)};}
-    return{available:false,cached:false,stale:true,staleSec:slot.lastGoodAt?Math.round((now-slot.lastGoodAt)/1000):null,reason:slot.lastError||'ainda sem valor válido'};
+    if(slot.value&&now-slot.lastGoodAt<=maxStaleMs){const age=now-slot.lastGoodAt;return{...slot.value,available:true,cached:age>intervalMs*1.5||Boolean(slot.lastError),stale:Boolean(slot.lastError)||age>maxStaleMs*.5,staleSec:Math.round(age/1000),sourceError:slot.lastError,_lastGoodAt:slot.lastGoodAt,_freshFetch:!slot.lastError&&slot.lastGoodAt===slot.lastAttemptAt?true:(!slot.lastError&&age<Math.min(intervalMs,8000))};}
+    return{available:false,cached:false,stale:true,staleSec:slot.lastGoodAt?Math.round((now-slot.lastGoodAt)/1000):null,reason:slot.lastError||'ainda sem valor válido',_lastGoodAt:slot.lastGoodAt||0};
   }
   async refreshSlow(settings){
     const adapter=this.poolRegistry.get(settings.poolId);
@@ -42,12 +42,12 @@ class TelemetryEngine extends EventEmitter{
       this.refreshOne('network',60000,15*60_000,()=>adapter.networkStats()),
       this.refreshOne('market',60000,30*60_000,()=>this.market.get())
     ]);
-    if(pool._freshFetch)this.db.poolSnapshot({...pool,ts:Date.now()});
+    if(pool._lastGoodAt&&pool._lastGoodAt!==this.lastPoolSeriesGoodAt)this.db.poolSnapshot({...pool,ts:pool._lastGoodAt});
     return{pool,network,market};
   }
   sessionStart(settings,pool){
     const id=crypto.randomUUID(),live=Boolean(pool?.available&&!pool?.cached),total=live?(Number(pool?.dueXmr)||0)+(Number(pool?.paidXmr)||0):null;
-    this.session={id,startedAt:Date.now(),baselinePoolXmr:total,baselinePending:total==null,baselineAccepted:live?Number(pool?.accepted||0):null,baselineRejected:live?Number(pool?.rejected||0):null};this.poolSeries=[];
+    this.session={id,startedAt:Date.now(),baselinePoolXmr:total,baselinePending:total==null,baselineAccepted:live?Number(pool?.accepted||0):null,baselineRejected:live?Number(pool?.rejected||0):null};this.poolSeries=[];this.lastPoolSeriesGoodAt=0;
     this.db.startSession({id,started_at:this.session.startedAt,pool:settings.poolId,wallet_masked:maskWallet(settings.wallet),profile:settings.activeProfile||'manual',objective:settings.objective||'balanced',baseline_pool_xmr:total||0});
     this.logger?.info('session','start','Sessão de mineração iniciada.',{id,baselinePending:this.session.baselinePending,baselinePoolXmr:total});return this.session;
   }
@@ -59,7 +59,7 @@ class TelemetryEngine extends EventEmitter{
   }
   finishSession(reason='user'){
     if(!this.session)return;const rows=this.db.sessionTelemetry(this.session.id),last=this.current||{},started=this.session.startedAt,stopped=Date.now(),sec=Math.max(1,(stopped-started)/1000),avgHash=S.mean(rows.map(r=>r.local_hashrate))||0,avgPower=S.mean(rows.map(r=>r.power_w))||0,avgPrice=S.mean(rows.map(r=>r.xmr_brl))||0,energy=avgPower/1000*sec/3600,settings=this.getSettings(),energyCost=energy*Number(settings.electricityBrlKWh||0),finalPool=(Number(last.pool?.dueXmr)||0)+(Number(last.pool?.paidXmr)||0),observed=this.session.baselinePoolXmr==null?0:Math.max(0,finalPool-this.session.baselinePoolXmr),revenue=observed*avgPrice;
-    this.db.finishSession(this.session.id,{stopped_at:stopped,final_pool_xmr:finalPool,xmr_observed:observed,avg_hashrate:avgHash,avg_power_w:avgPower,avg_price_brl:avgPrice,energy_kwh:energy,energy_cost_brl:energyCost,revenue_brl:revenue,profit_brl:revenue-energyCost,accepted:Number(last.session?.accepted||0),rejected:Number(last.session?.rejected||0),stop_reason:reason});this.logger?.info('session','finish','Sessão finalizada.',{id:this.session.id,reason,observedXmr:observed});this.session=null;this.poolSeries=[];
+    this.db.finishSession(this.session.id,{stopped_at:stopped,final_pool_xmr:finalPool,xmr_observed:observed,avg_hashrate:avgHash,avg_power_w:avgPower,avg_price_brl:avgPrice,energy_kwh:energy,energy_cost_brl:energyCost,revenue_brl:revenue,profit_brl:revenue-energyCost,accepted:Number(last.session?.accepted||0),rejected:Number(last.session?.rejected||0),stop_reason:reason});this.logger?.info('session','finish','Sessão finalizada.',{id:this.session.id,reason,observedXmr:observed});this.session=null;this.poolSeries=[];this.lastPoolSeriesGoodAt=0;
   }
   async tick(){
     if(this.busy){this.logger?.throttle('telemetry-overlap',30000,()=>this.logger?.warn('telemetry','overlap-prevented','Tick anterior ainda estava em execução; sobreposição foi evitada.'));return this.current;}
@@ -71,7 +71,7 @@ class TelemetryEngine extends EventEmitter{
       if(mining&&!this.session)this.sessionStart(settings,pool);this.establishBaseline(pool);
       if(!miner.processRunning&&this.session&&miner.desired==='stopped')this.finishSession(miner.stopReason||'stopped');
       const power=this.power.sample({mining,hardwareSample:hw,profile:miner.profile||{}}),totalPoolXmr=(Number(pool?.dueXmr)||0)+(Number(pool?.paidXmr)||0);
-      if(pool?.available&&pool._freshFetch&&!this.session?.baselinePending){this.poolSeries.push({ts:Date.now(),totalPoolXmr});this.poolSeries=this.poolSeries.filter(r=>Date.now()-r.ts<12*3600_000);}
+      if(pool?.available&&pool._lastGoodAt&&pool._lastGoodAt!==this.lastPoolSeriesGoodAt&&!this.session?.baselinePending){this.poolSeries.push({ts:pool._lastGoodAt,totalPoolXmr});this.lastPoolSeriesGoodAt=pool._lastGoodAt;this.poolSeries=this.poolSeries.filter(r=>Date.now()-r.ts<12*3600_000);}
       const observed=slopeRate(this.poolSeries),effectiveHash=Number(pool?.hashrate||0)>0?Number(pool.hashrate):Number(miner.hashrate60s||miner.hashrate10s||0),theoretical=network?.available&&effectiveHash>0?Profit.networkRateXmrPerSec(effectiveHash,network.difficulty,network.reward,Number(settings.poolFeePct||0)):null;
       let xmrPerSec=null,rateSource='indisponível',rateConfidence=0;
       if(observed.rate&&observed.confidence>=.25){xmrPerSec=observed.rate;rateSource='crescimento observado do saldo do pool';rateConfidence=observed.confidence;}
