@@ -1,0 +1,6 @@
+node_modules/
+.env
+data/state.json
+data/audit.ndjson
+*.log
+.DS_Store
