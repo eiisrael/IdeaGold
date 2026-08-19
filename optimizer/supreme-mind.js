@@ -68,6 +68,7 @@ class SupremeMind extends EventEmitter{
           this.logDecision({action:'MANTER CONFIGURAÇÃO',reason:'Candidato superou o melhor perfil medido com margem mínima e passou nas regras de segurança.',before:previousBest?.config,after:result.config||config,observed:delta,confidence:result.confidence,result:'WIN'});
         }else{
           this.logDecision({action:'REVERTER',reason:result.safe?'Ganho não superou a margem mínima para justificar mudança.':result.safetyReason,before:best?.config,after:config,observed:result.comparison,confidence:result.confidence,result:'LOSS'});
+          if(result.safe)await this.controller.restart({...this.getContext(),profile:best.config},'supreme-mind-loss-rollback');
         }
       }
       if(!best)throw new Error('Nenhum benchmark válido foi concluído.');
