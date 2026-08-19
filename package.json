@@ -1,8 +1,8 @@
 {
-  "name": "ideagold-v2",
-  "version": "2.1.0",
+  "name": "ideagold",
+  "version": "3.0.0",
   "private": true,
-  "description": "GoldMesh Profit Guard: mineração autorizada, telemetria XMRig, perfil i5-4670K/RX460, energia, rentabilidade e conversão via exchanges.",
+  "description": "IdeaGold 3.0: mineração XMR em um clique, XMRig verificado, telemetria e Profit Guard.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
