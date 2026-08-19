@@ -1,90 +1,66 @@
-# IdeaGold 4.0 — GoldBrain
+# IdeaGold 4.1 — GoldBrain Real
 
-A V4 mantém a experiência de um clique, mas troca o estimador simples por um motor híbrido e melhora a configuração do minerador.
+A V4.1 corrige a telemetria e a estimativa da V4 para que o painel diferencie processo aberto, calibracao e mineracao efetiva. Nenhum cronometro ou lucro e apresentado como real quando faltam dados suficientes.
 
-## O que mudou
+## Correcoes principais
 
-- MoneroOcean advanced XMRig `6.26.0-mo4` fixado no commit `13b87c26...` e verificado pelo Git blob SHA-1 antes de executar.
-- Fallback para XMRig oficial `6.26.0` com SHA-256 fixado.
-- Remove o sufixo `~rx/0` do password no build avançado, permitindo que o minerador/pool usem o mecanismo de algoritmo mais rentável quando suportado.
-- CPU em RandomX com `mode=fast`, Huge Pages, Huge Pages JIT, MSR, ASM automático, `yield=false`, prioridade 3 e seleção automática de threads por cache/algoritmo.
-- OpenCL habilitável/automático para AMD; CUDA permanece desligado neste perfil.
-- Watchdog reinicia o minerador quando ele fecha inesperadamente, mas respeita o botão PARAR.
-- Workers HMAC para outro PC/VPS autorizado, com custo de energia e custo cloud incorporados ao lucro líquido.
-- O painel usa o hashrate normalizado do MoneroOcean quando disponível, evitando comparar diretamente H/s de algoritmos incompatíveis.
+- Estado real do minerador: `parado`, `iniciando`, `calibrando`, `minerando`, `confirmado pelo pool` ou `travado`.
+- O painel so mostra **minerando** quando existe hashrate local real ou trabalho recente confirmado pelo pool.
+- Shares antigas do pool nao sao mais apresentadas como shares da sessao atual. Ao iniciar, o IdeaGold grava um baseline do pool e mostra apenas a diferenca desta sessao.
+- O saldo ganho na sessao e calculado por `amtDue + amtPaid` atual menos o baseline registrado ao iniciar.
+- Hashrate efetivo prioriza `hash2`, o hashrate XMR-normalizado do MoneroOcean, e ignora dado do pool quando a ultima share esta velha.
+- A API local do XMRig e reforcada na inicializacao em `127.0.0.1:18080`; se ela falhar, o IdeaGold pode extrair telemetria recente do log da sessao.
+- O preco do XMR usa fontes reais com fallback e cache curto. Sem preco valido, o painel mostra `aguardando preco` em vez de calcular BRL ficticio.
+- Projecoes de lucro so sao exibidas quando ha uma taxa de producao observavel e preco real disponivel.
+- Consumo aparece como **medido** quando informado por wattimetro; caso contrario aparece explicitamente como **estimativa do perfil de hardware**.
 
-## GoldBrain Hybrid Estimator
+## Proximo incremento dinamico
 
-O SupremeMind usa busca híbrida ponderada. A V4 reutiliza esse princípio de engenharia, não o código de busca: várias fontes independentes recebem pesos de confiança e são combinadas.
+O antigo marco fixo de `0.000015 XMR` foi removido da tela principal. A V4.1 escolhe o proximo incremento usando dados da sessao:
 
-Sinais do estimador:
+1. quando ja existem creditos positivos reais do pool, usa a mediana dos incrementos observados;
+2. durante o bootstrap, usa um quantum dinamico derivado da taxa de producao disponivel;
+3. se ainda nao existe taxa confiavel, mostra **AGUARDANDO DADOS** e nao inventa `00:00:00`.
 
-1. **Saldo real do pool** — regressão ponderada do total ganho (`amtDue + amtPaid`) ao longo do tempo. Peso máximo 55%.
-2. **Hashrate XMR-normalizado do pool** — convertido por dificuldade e recompensa atuais. Peso máximo 35%.
-3. **Modelo de rede local** — usado como bootstrap quando o algoritmo local é RandomX. Peso máximo 10%.
-
-Os pesos são renormalizados conforme os sinais existem e a confiança do histórico aumenta.
-
-### Taxa esperada
-
-Para RandomX:
+A ETA e calculada por:
 
 ```text
-XMR/s = H/s / dificuldade × recompensa × fator do minerador
+tempo esperado = XMR restante / taxa XMR por segundo
 ```
 
-### Próximo marco
+A faixa otimista/conservadora e derivada da variabilidade observada. Como o MoneroOcean usa PPLNS, o credito pode aparecer em blocos em vez de pingar a cada segundo; por isso a ETA representa producao equivalente, nao promessa de horario de pagamento.
 
-O painel usa um marco padrão de `0.000015 XMR` e calcula:
+## Minerador e desempenho
 
-```text
-tempo esperado = XMR restante / XMR por segundo estimado
-```
+### Modo Estavel — padrao
 
-Também exibe faixa otimista/conservadora baseada na variabilidade robusta do hashrate. Isso é uma **ETA estatística**, não um relógio garantido, porque shares são aleatórias.
+Usa XMRig oficial 6.26.0 verificado por SHA-256, RandomX e configuracao segura para iniciar a mineracao imediatamente. Huge Pages, MSR, ASM e ajuste de threads continuam habilitados.
 
-### Próxima share
+### Modo Auto-switch avancado — opcional
 
-Quando a dificuldade da share está disponível:
+Usa o build avancado do MoneroOcean 6.26.0-mo4, fixado em commit e verificado antes de executar. Os resultados de benchmark podem ser salvos para evitar calibracoes completas em cada inicio. Enquanto o minerador estiver benchmarkando, a interface mostra **CALIBRANDO**, nao **MINERANDO**.
 
-```text
-E[T] = dificuldade_da_share / hashrate
-mediana = ln(2) × E[T]
-p80 = -ln(0.2) × E[T]
-```
+GPU AMD/OpenCL continua opcional. No modo automatico ela so e considerada ativa quando a telemetria confirma backend OpenCL real.
 
-### Lucro
+## Estimador GoldBrain
 
-```text
-bruto XMR = taxa XMR/s × segundos
-bruto BRL = bruto XMR × preço XMR/BRL
-energia = watts/1000 × horas × R$/kWh
-líquido = bruto BRL - energia - custo cloud
-```
+O estimador combina somente sinais existentes:
 
-Se o usuário informar watts medidos na tomada, esse valor substitui as estimativas de potência.
+- crescimento real do saldo do pool;
+- hashrate XMR-normalizado recente do pool;
+- modelo de rede local quando o algoritmo permite comparacao valida.
 
-### Risco
+Cada fonte recebe peso de confianca. Sem fonte suficiente, a taxa fica indisponivel em vez de virar zero apresentado como previsao.
 
-O painel executa Monte Carlo de 8.000 cenários para 30 dias. O objetivo é mostrar faixa de resultado e probabilidade de lucro/prejuízo; não prometer rendimento futuro.
+## Workers autorizados
 
-## Cloud / outro PC
+O suporte a PC/LAN/VPS/cloud permanece. Workers usam heartbeat HMAC e podem informar potencia, tarifa e custo cloud. O IdeaGold nao cria nem usa maquinas de terceiros sem autorizacao.
 
-O IdeaGold não cria VPS nem usa máquinas de terceiros sem autorização. Para um servidor/PC que você controla:
-
-1. instale/configure XMRig na máquina;
-2. copie `worker-agent.js` e `.env.example`;
-3. use o mesmo `WORKER_SHARED_SECRET` no servidor e worker;
-4. informe `WORKER_POWER_WATTS`, `WORKER_ELECTRICITY_BRL_KWH` e `WORKER_CLOUD_COST_BRL_DAY`;
-5. execute `node worker-agent.js`.
-
-O worker só envia telemetria assinada; não fornece shell remoto ao painel.
-
-## Testes
+## Validacao
 
 ```bash
 npm run check
 npm test
 ```
 
-O inicializador Windows executa essas verificações antes de subir o painel.
+A V4.1 inclui testes para ETA dinamica, regressao de saldo, estimador hibrido e ausencia segura de previsao quando faltam dados.
