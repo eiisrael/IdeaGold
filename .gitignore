@@ -5,5 +5,10 @@ data/user.json
 data/workers.json
 data/state.json
 data/audit.ndjson
+data/settings.json
+data/*.sqlite
+data/*.sqlite-*
+data/*.db
+data/*.db-*
 *.log
 .DS_Store
