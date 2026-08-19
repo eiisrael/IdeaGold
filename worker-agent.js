@@ -105,7 +105,7 @@ async function heartbeat(payload) {
 
 async function tick() {
   try {
-    if (!SECRET || SECRET === 'troque-por-um-segredo-forte') throw new Error('Configure WORKER_SHARED_SECRET igual ao servidor');
+    if (SECRET.length < 16 || SECRET === 'troque-por-um-segredo-forte') throw new Error('Configure WORKER_SHARED_SECRET forte (mínimo 16 caracteres) igual ao servidor');
     const [summary, backends] = await Promise.all([
       localJson('/2/summary'),
       localJson('/2/backends').catch(() => null)

@@ -1,136 +1,180 @@
-# IdeaGold 4.1 — GoldBrain Real + Efficiency Lab
+# IdeaGold 5.0 — Mining Intelligence Platform
 
-IdeaGold é um painel local para mineração autorizada em hardware que você controla. A linha estável atual usa XMRig verificado, MoneroOcean, telemetria real do minerador/pool, ETA estatística e cálculo de custo. A branch `agent/ideagold-v4-2-efficiency-lab` adiciona ferramentas **passivas e opt-in** para pesquisar eficiência sem alterar o caminho de mineração já validado.
+IdeaGold 5.0 é uma plataforma **local-first** para mineração autorizada de Monero/XMR com RandomX. O motor de mineração continua sendo o **XMRig oficial**, enquanto o IdeaGold controla processo/configuração, mede telemetria real, registra histórico em SQLite, calcula energia/rentabilidade e executa autotuning controlado pelo **Supreme Mind**.
 
-## Regra de segurança desta branch
+## Regra central
 
-O minerador estável continua sendo `server-v4.js` + `index-v4.html`. O Efficiency Lab não troca algoritmo, não aplica overclock/undervolt, não cria VPS, não inicia mineração escondida e não substitui o XMRig funcionando sem benchmark real.
+- dado ausente não vira zero fictício;
+- estimativa é rotulada como estimativa;
+- ganho real da sessão vem da diferença observada no pool;
+- preço vem de APIs reais com fallback/cache curto;
+- potência mostra a fonte: sensor/medida pelo usuário/estimada;
+- Supreme Mind nunca é apresentado como deep learning: hoje ele combina Rule Engine, Statistical Model e Bayesian Optimizer; ML avançado permanece desligado até existir dataset local suficiente;
+- nenhuma mineração escondida, persistência furtiva, desativação de antivírus ou uso de máquina não autorizada.
 
-A prioridade é:
+## Início rápido no Windows
 
-```text
-1. dados reais
-2. estabilidade
-3. R$/W
-4. receita bruta
-5. H/s
-```
+1. Baixe/clone a branch da versão 5.
+2. Dê dois cliques em `INICIAR_IDEAGOLD.bat`.
+3. O Windows solicitará Administrador explicitamente para Huge Pages/MSR.
+4. O launcher valida sintaxe e executa os testes antes de abrir o painel.
+5. Abra `http://127.0.0.1:8080`.
+6. Cole **somente o endereço público XMR** e clique **INICIAR MINERAÇÃO**.
 
-Mais H/s não é melhoria se o custo elétrico subir mais do que a receita.
+Requisito: Node.js **22.5+**. Node 26 é suportado.
 
-## Iniciar
-
-No Windows, use:
-
-```bat
-INICIAR_IDEAGOLD.bat
-```
-
-O inicializador pede elevação de Administrador quando necessário para Huge Pages/MSR, executa `npm run check` e `npm test` e então inicia o painel local em:
+## Arquitetura
 
 ```text
-http://127.0.0.1:8080
+frontend/
+  index.html, styles.css, app.js
+backend/
+  server.js, settings.js, worker-auth.js
+miner/
+  xmrig-controller.js, config-manager.js
+telemetry/
+  engine.js
+providers/
+  hardware/, power/, market/, pool/
+optimizer/
+  supreme-mind.js, benchmark-engine.js, bayesian-optimizer.js,
+  statistics.js, safety-engine.js, anomaly-detector.js, scoring.js,
+  bandit.js, profit-engine.js
+database/
+  db.js, workers.js
+worker-agent.js
+scripts/
+  check.js
+tests/
+  run.js, workers.js, smoke-server.js
+docs/
+  documentação técnica
 ```
 
-Nunca coloque seed, private spend key, private view key ou senha da carteira no IdeaGold. O sistema usa apenas o endereço público XMR.
+## O que é real
 
-## Caminho estável atual
+### Mineração
+- XMRig oficial 6.26.0 no Windows x64, fixado por release e SHA-256.
+- RandomX CPU como caminho padrão estável.
+- API do XMRig em `127.0.0.1:18080`.
+- Start/stop/restart/pause-resume controlados pelo usuário.
+- Huge Pages/MSR solicitados no config, sem desativar proteções do Windows.
 
-- XMRig oficial 6.26.0 verificado por SHA-256.
-- RandomX estável como padrão.
-- MoneroOcean por TLS.
-- MSR, Huge Pages, ASM e modo RandomX fast solicitados.
-- API do XMRig somente em `127.0.0.1`.
-- Baseline por sessão para não confundir shares antigas com shares atuais.
-- Hash efetivo XMR-normalizado do pool quando recente.
-- Preço com múltiplas fontes e cache curto.
-- ETA dinâmica; sem dados suficientes mostra aguardando em vez de inventar zero.
-- Workers LAN/VPS/cloud somente em máquinas autorizadas e autenticados por HMAC.
+### Telemetria
+- H/s 10s, 60s e 15m separados.
+- accepted/rejected da sessão.
+- hash efetivo e saldo do pool quando o adapter fornece.
+- ganho real = `(saldo devido + pago atual) - baseline da sessão`.
+- SQLite guarda sessões, telemetria, benchmarks, decisões, alertas, workers e snapshots.
 
-## Efficiency Lab — modo sombra
+### Rentabilidade
+- preço XMR: CoinGecko → CryptoCompare → Kraken + Frankfurter → cache recente.
+- dificuldade/reward via adapter de rede.
+- custo/hora/dia/mês, XMR/kWh, H/W e break-even.
+- projeção teórica separada do crédito real do pool.
+- ETA de share e incremento usa distribuição probabilística; nunca é promessa de horário exato.
 
-O laboratório observa o IdeaGold já em execução e produz uma auditoria sem modificar configuração:
+### Supreme Mind
+Objetivos disponíveis:
 
-```bash
-npm run efficiency:audit
-```
+- `performance`: maximiza H/s;
+- `efficiency`: maximiza H/W;
+- `profit`: maximiza líquido estimado;
+- `balanced`: pondera hash/eficiência/estabilidade/térmico;
+- `silent`: reduz impacto;
+- `manual`: não altera configuração automaticamente.
 
-Padrão: 3 minutos, amostra a cada 10 segundos.
-
-Exemplo mais longo:
-
-```bash
-node tools/efficiency-audit.js --seconds=600 --interval=10
-```
-
-Se houver wattímetro, informe a potência real durante a mineração:
-
-```bash
-node tools/efficiency-audit.js --seconds=600 --mining-watts=82
-```
-
-Se o PC ficaria ligado mesmo sem mineração, é possível analisar **consumo incremental** com duas medições de tomada:
-
-```bash
-node tools/efficiency-audit.js --seconds=600 --mining-watts=82 --idle-watts=48 --cost-mode=incremental
-```
-
-Nesse exemplo, o custo atribuível à mineração é calculado sobre 34 W, e não sobre 82 W. Só use modo incremental quando as duas medições forem reais e comparáveis.
-
-O relatório fica em `runtime/efficiency-audit-*.json` e contém mediana robusta/MAD, variabilidade, taxa XMR/h, custo, líquido, multiplicador necessário para break-even e prioridades técnicas.
-
-## O que a “IA” faz
-
-`lib/efficiency-brain.js` implementa um controlador estatístico leve, local e auditável:
-
-- mediana + MAD para rejeitar picos de hashrate;
-- score de candidato por lucro líquido quando potência é medida;
-- fallback para H/W quando há potência medida mas não há economia completa;
-- fallback de baixa confiança para hashrate quando não existe medição elétrica;
-- bloqueio de candidato com temperatura acima do limite ou rejeição excessiva de shares;
-- histerese: não troca configuração por melhoria pequena;
-- UCB1 (multi-armed bandit) para explorar candidatos não medidos sem ficar trocando aleatoriamente.
-
-Na fase atual ele roda em **modo sombra**: mede e recomenda. A aplicação automática de uma configuração só deve ser habilitada depois de benchmarks repetíveis no hardware real.
-
-## Prioridade técnica para o SNIPER
-
-O perfil atual é i5-4670K + RX 460 4 GB. Antes de integrar mais mineradores, corrija Huge Pages se o diagnóstico mostrar `0%`. RandomX precisa aproximadamente de 2 MB de L3 por thread; por isso 3 threads continuam sendo o ponto inicial sensato para 6 MB de L3, mas o vencedor final deve vir de benchmark real.
-
-A RX 460 não é ativada automaticamente nesta branch. Mineradores modernos e algoritmos GPU mudam rapidamente e alguns projetos atuais não listam RX 460 como oficialmente suportada. A próxima etapa segura é um **capability probe** local: detectar OpenCL, VRAM, algoritmo e benchmark antes de permitir produção.
-
-## Pesquisa técnica 2026
-
-Veja `docs/RESEARCH-EFFICIENCY-2026.md` para o inventário verificado de XMRig, MoneroOcean Multi-Miner, MO-Miner, SRBMiner, LibreHardwareMonitor e trabalhos de DVFS/ML.
-
-Resumo das decisões:
-
-- **usar como referência/integração futura:** MoneroOcean Multi-Miner, MO-Miner capability probe, LibreHardwareMonitor, otimização estatística online;
-- **manter:** XMRig oficial como fallback/estável;
-- **não automatizar:** overclock, undervolt, BIOS, Secure Boot, drivers, cloud paga;
-- **não instalar como padrão na RX 460:** minerador cuja documentação atual não inclua esse modelo ou que não passe no capability probe;
-- **não usar:** projetos antigos sem manutenção como base do orquestrador atual.
-
-## Arquivos principais
+Autotuning:
 
 ```text
-server-v4.js                 backend estável
-index-v4.html                interface atual
-lib/goldbrain.js             estimador de produção/ETA/risco
-lib/efficiency-brain.js      motor R$/W em modo sombra
-tools/efficiency-audit.js    auditoria passiva
-test/*.test.js               testes matemáticos
-worker-agent.js              worker autorizado HMAC
-hardware-profile.json        referência histórica do SNIPER
+baseline
+→ warm-up
+→ amostragem
+→ limpeza de outliers
+→ candidato seguro
+→ comparação estatística
+→ winner ou rollback
+→ Last Known Good
 ```
+
+O espaço de busca é sugerido por um Gaussian Process com Expected Improvement. A política UCB1 existe para seleção entre perfis quando houver histórico suficiente; não é usada para inventar performance. O Decision Log registra configuração anterior, candidata, motivo, resultado e confiança. Se o usuário interromper o autotuning, o melhor perfil estável já medido é restaurado.
+
+## Workers LAN / VPS / cloud autorizados
+
+`worker-agent.js` voltou a fazer parte da arquitetura V5 de forma funcional. Ele lê a API **local** do XMRig no worker e envia somente métricas para `/api/workers/heartbeat`.
+
+Proteções:
+
+- autenticação HMAC-SHA256 com `WORKER_SHARED_SECRET`;
+- janela de timestamp de 5 minutos;
+- comparação de assinatura em tempo constante;
+- replay de heartbeat rejeitado durante a janela ativa;
+- payload limitado e normalizado;
+- estado e último heartbeat persistidos em SQLite;
+- worker é considerado offline após 45 segundos sem heartbeat;
+- nenhuma execução remota de shell/comando é oferecida pelo servidor.
+
+Para usar outro PC da LAN, gere um segredo forte, use o mesmo segredo no servidor e worker e altere `HOST=0.0.0.0` **somente se necessário**, protegendo a porta 8080 no firewall. Para uso em um único PC, mantenha `HOST=127.0.0.1`.
+
+O hash/potência de workers remotos é exibido como telemetria separada. O IdeaGold não mistura automaticamente um hashrate remoto heterogêneo com o lucro local sem dados econômicos comparáveis, evitando criar uma rentabilidade fictícia.
+
+## Pools
+
+- **MoneroOcean**: adapter principal desta versão.
+- **P2Pool**: opção avançada/local. Detecta Stratum local; métricas detalhadas só aparecem quando `P2POOL_DATA_API` está configurado.
+- P2Pool não é obrigatório e o IdeaGold não inventa dados se o node não estiver disponível.
+
+## Energia e sensores
+
+Prioridade de fonte:
+
+1. sensor local configurado em `IDEAGOLD_SENSOR_URL` → `W reais`;
+2. wattímetro informado pelo usuário → `W reais`;
+3. modelo do perfil → `W estimados`.
+
+Temperatura também permanece `indisponível` quando o Windows/hardware não fornece sensor confiável. Uma zona ACPI pode ser mostrada com ressalva explícita; não é rebatizada como CPU Package.
+
+## Segurança
+
+- backend em localhost por padrão;
+- endpoints de alteração do minerador exigem origem loopback;
+- heartbeat remoto aceita apenas worker autenticado por HMAC;
+- logs administrativos só são servidos para loopback;
+- XMRig HTTP API em localhost;
+- somente endereço público XMR é necessário;
+- seed phrase/private spend key nunca são solicitadas;
+- binário automático do XMRig tem checksum fixado antes de executar;
+- auto-recovery limitado a 3 tentativas/15 min;
+- config gerado, config do usuário e Last Known Good são separados e recebem backup lógico.
+
+Consulte `docs/SECURITY.md`.
 
 ## Validação
 
 ```bash
+npm ci
 npm run check
 npm test
+npm run test:smoke
 ```
+
+Os testes cobrem estatística, ETA probabilística, energia, break-even, configuração, Safety Engine, pool score, Bayesian Optimizer, persistência SQLite, autenticação/registro de workers e inicialização real do backend. O smoke test sobe o servidor em uma porta temporária, consulta `/api/health`, envia um heartbeat HMAC e confirma o worker no registro SQLite.
 
 ## Limites reais
 
-IdeaGold pode reduzir desperdício, escolher configurações melhores e detectar quando uma configuração custa mais do que rende. Ele não altera a probabilidade matemática do PoW e não cria energia ou hashrate gratuito. Em hardware antigo com tarifa alta, a melhor decisão econômica pode ser reduzir carga ou não minerar; o software deve mostrar isso em vez de simular lucro.
+O IdeaGold pode reduzir desperdício e encontrar melhor configuração **para o hardware medido**, mas não muda a matemática do PoW nem cria hashrate/energia gratuitos. Se a tarifa for maior do que a receita, o painel exibirá prejuízo estimado; o modo Profit pode concluir que um perfil menos agressivo é melhor, mas não promete tornar hardware antigo lucrativo.
+
+Documentação adicional:
+
+- `docs/AUDIT.md`
+- `docs/REFERENCE_ANALYSIS.md`
+- `docs/IMPLEMENTATION_MATRIX.md`
+- `docs/ARCHITECTURE.md`
+- `docs/SUPREME_MIND.md`
+- `docs/SECURITY.md`
+- `docs/INSTALL_WINDOWS.md`
+- `docs/INSTALL_LINUX.md`
+- `docs/POOL_ADAPTERS.md`
+- `docs/BENCHMARKING.md`
+- `THIRD_PARTY_LICENSES.md`
+- `ATTRIBUTIONS.md`
