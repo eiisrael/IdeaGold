@@ -1,139 +1,136 @@
-# IdeaGold 2.0 — GoldMesh
+# IdeaGold 4.1 — GoldBrain Real + Efficiency Lab
 
-IdeaGold 2.0 é um painel de **mineração distribuída autorizada**. Ele não promete lucro e não tenta transformar o navegador em um minerador milagroso. O servidor centraliza telemetria, preço, rentabilidade, configuração de XMRig e conversão via exchanges; cada máquina/VPS que você controla roda o `worker-agent.js` ao lado do XMRig.
+IdeaGold é um painel local para mineração autorizada em hardware que você controla. A linha estável atual usa XMRig verificado, MoneroOcean, telemetria real do minerador/pool, ETA estatística e cálculo de custo. A branch `agent/ideagold-v4-2-efficiency-lab` adiciona ferramentas **passivas e opt-in** para pesquisar eficiência sem alterar o caminho de mineração já validado.
 
-## O que existe nesta V2
+## Regra de segurança desta branch
 
-- Dashboard responsivo com preços BTC/XMR/ETH/LTC em USD e BRL.
-- **GoldMesh Workers:** múltiplos workers, heartbeat assinado com HMAC e detecção de offline.
-- Integração com a HTTP API oficial do **XMRig** sem precisar expor essa API para a internet.
-- Gerador de `config.json` do XMRig para pool/P2Pool.
-- Motor de rentabilidade para:
-  - SHA-256/Bitcoin-like (`difficulty × 2^32`);
-  - RandomX/Monero-like (difficulty como hashes esperados por bloco).
-- Custos de energia, cloud/VPS, taxa de pool, uptime, break-even e projeção.
-- Cotações via **CoinGecko**.
-- Exchanges via **CCXT**. Padrão: `mercado` e `kraken`.
-- Cotação de conversão e consulta de saldo.
-- Ordem de mercado REAL somente após:
-  1. credenciais no servidor;
-  2. `ENABLE_LIVE_TRADING=true`;
-  3. confirmação textual `CONVERTER_AGORA`;
-  4. limite `MAX_LIVE_TRADE_BRL`.
+O minerador estável continua sendo `server-v4.js` + `index-v4.html`. O Efficiency Lab não troca algoritmo, não aplica overclock/undervolt, não cria VPS, não inicia mineração escondida e não substitui o XMRig funcionando sem benchmark real.
 
-## Arquitetura
+A prioridade é:
 
 ```text
-┌──────────────────────── IdeaGold Server ─────────────────────────┐
-│ Dashboard HTML                                                   │
-│ API Node.js                                                      │
-│ CoinGecko -> preços                                              │
-│ CCXT -> exchange / saldo / ordens                                │
-│ GoldMesh -> workers assinados HMAC                               │
-└──────────────────────────────┬────────────────────────────────────┘
-                               │ HTTPS
-                  ┌────────────┴────────────┐
-                  │                         │
-           Worker/VPS 1                Worker/VPS 2
-           worker-agent.js             worker-agent.js
-                  │                         │
-            127.0.0.1 API              127.0.0.1 API
-                  │                         │
-                XMRig                     XMRig
-                  │                         │
-             Pool/P2Pool               Pool/P2Pool
+1. dados reais
+2. estabilidade
+3. R$/W
+4. receita bruta
+5. H/s
 ```
 
-O agente **não oferece shell remoto** e não baixa minerador escondido. O operador instala o XMRig e escolhe o pool/carteira. Se `AUTO_START_XMRIG=true`, o agente só inicia um binário local chamado `xmrig`/`xmrig.exe`.
+Mais H/s não é melhoria se o custo elétrico subir mais do que a receita.
 
-## Instalação do painel
+## Iniciar
 
-Requisitos: Node.js 20+.
+No Windows, use:
+
+```bat
+INICIAR_IDEAGOLD.bat
+```
+
+O inicializador pede elevação de Administrador quando necessário para Huge Pages/MSR, executa `npm run check` e `npm test` e então inicia o painel local em:
+
+```text
+http://127.0.0.1:8080
+```
+
+Nunca coloque seed, private spend key, private view key ou senha da carteira no IdeaGold. O sistema usa apenas o endereço público XMR.
+
+## Caminho estável atual
+
+- XMRig oficial 6.26.0 verificado por SHA-256.
+- RandomX estável como padrão.
+- MoneroOcean por TLS.
+- MSR, Huge Pages, ASM e modo RandomX fast solicitados.
+- API do XMRig somente em `127.0.0.1`.
+- Baseline por sessão para não confundir shares antigas com shares atuais.
+- Hash efetivo XMR-normalizado do pool quando recente.
+- Preço com múltiplas fontes e cache curto.
+- ETA dinâmica; sem dados suficientes mostra aguardando em vez de inventar zero.
+- Workers LAN/VPS/cloud somente em máquinas autorizadas e autenticados por HMAC.
+
+## Efficiency Lab — modo sombra
+
+O laboratório observa o IdeaGold já em execução e produz uma auditoria sem modificar configuração:
 
 ```bash
-git clone https://github.com/eiisrael/IdeaGold.git
-cd IdeaGold
-npm install
-cp .env.example .env
-node server.js
+npm run efficiency:audit
 ```
 
-Abra `http://127.0.0.1:8080`.
+Padrão: 3 minutos, amostra a cada 10 segundos.
 
-Gere um segredo forte:
+Exemplo mais longo:
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+node tools/efficiency-audit.js --seconds=600 --interval=10
 ```
 
-Coloque o mesmo valor em `WORKER_SHARED_SECRET` no servidor e em cada worker.
-
-## Worker XMRig
-
-1. Instale XMRig pelo projeto oficial.
-2. Configure o HTTP API para `127.0.0.1`, por exemplo porta `18080`.
-3. No worker, tenha `worker-agent.js`, `package.json` e `.env`.
-4. Ajuste:
-
-```env
-IDEAGOLD_SERVER=https://SEU-PAINEL
-WORKER_SHARED_SECRET=O_MESMO_SEGREDO
-WORKER_ID=rig-01
-WORKER_NAME=VPS-01
-XMRIG_API=http://127.0.0.1:18080/2/summary
-```
-
-5. Rode:
+Se houver wattímetro, informe a potência real durante a mineração:
 
 ```bash
-node worker-agent.js
+node tools/efficiency-audit.js --seconds=600 --mining-watts=82
 ```
 
-Para P2Pool, o XMRig normalmente aponta para o Stratum local do P2Pool (ex.: `127.0.0.1:3333`). Use uma carteira de mineração apropriada e siga os requisitos oficiais do Monero/P2Pool.
-
-## Exchange e conversão para BRL
-
-O IdeaGold não recebe seed phrase nem chave privada de carteira. Para converter valores, use uma conta de exchange e chave de API.
-
-Exemplo Mercado Bitcoin:
-
-```env
-MERCADO_API_KEY=...
-MERCADO_SECRET=...
-ENABLE_LIVE_TRADING=false
-MAX_LIVE_TRADE_BRL=500
-```
-
-Comece com `false`. O painel consegue fazer **cotação pública** sem chave. Após validar saldo e permissões, você pode habilitar trading real. A ação "Converter" cria uma ordem de mercado pelo CCXT; por exemplo `BTC/BRL` vende BTC e gera saldo em BRL na sua conta da exchange.
-
-**Saque do BRL para banco/Pix:** faça no app/site oficial da exchange, especialmente enquanto você estiver validando os parâmetros bancários da sua conta. A API do Mercado Bitcoin oferece saques fiat/cripto, mas parâmetros bancários e destinos confiáveis são específicos da conta; esta V2 evita automatizar essa última etapa para não enviar dinheiro a um destino incorreto.
-
-## Segurança
-
-- Não publique `.env`.
-- Nunca coloque seed phrase/chave privada no IdeaGold.
-- Use chaves de exchange com o mínimo de permissões.
-- Para painel exposto à internet, use HTTPS via reverse proxy.
-- Deixe a API do XMRig em `127.0.0.1`.
-- Troque `WORKER_SHARED_SECRET`.
-- Mantenha `ENABLE_LIVE_TRADING=false` até concluir testes.
-- Respeite os termos do provedor cloud; mineração pode ser proibida ou economicamente inviável em determinadas instâncias.
-
-## Docker
+Se o PC ficaria ligado mesmo sem mineração, é possível analisar **consumo incremental** com duas medições de tomada:
 
 ```bash
-docker build -t ideagold:2 .
-docker run --rm -p 8080:8080 --env-file .env ideagold:2
+node tools/efficiency-audit.js --seconds=600 --mining-watts=82 --idle-watts=48 --cost-mode=incremental
 ```
 
-## Fontes técnicas usadas na arquitetura
+Nesse exemplo, o custo atribuível à mineração é calculado sobre 34 W, e não sobre 82 W. Só use modo incremental quando as duas medições forem reais e comparáveis.
 
-- XMRig + HTTP API.
-- Monero/P2Pool.
-- CCXT para normalização de exchanges.
-- CoinGecko para preço.
-- Mercado Bitcoin como rota brasileira opcional para pares em BRL.
+O relatório fica em `runtime/efficiency-audit-*.json` e contém mediana robusta/MAD, variabilidade, taxa XMR/h, custo, líquido, multiplicador necessário para break-even e prioridades técnicas.
 
-## Limitações importantes
+## O que a “IA” faz
 
-Rentabilidade é probabilística. CPU/GPU comum não substitui ASIC em Bitcoin. "Cloud mining" não cria poder computacional grátis: é necessário hardware próprio, VPS permitido pelo provedor, contrato de hashrate ou ASIC/pool reais. O objetivo da V2 é **orquestrar, medir e converter**, não simular ganhos inexistentes.
+`lib/efficiency-brain.js` implementa um controlador estatístico leve, local e auditável:
+
+- mediana + MAD para rejeitar picos de hashrate;
+- score de candidato por lucro líquido quando potência é medida;
+- fallback para H/W quando há potência medida mas não há economia completa;
+- fallback de baixa confiança para hashrate quando não existe medição elétrica;
+- bloqueio de candidato com temperatura acima do limite ou rejeição excessiva de shares;
+- histerese: não troca configuração por melhoria pequena;
+- UCB1 (multi-armed bandit) para explorar candidatos não medidos sem ficar trocando aleatoriamente.
+
+Na fase atual ele roda em **modo sombra**: mede e recomenda. A aplicação automática de uma configuração só deve ser habilitada depois de benchmarks repetíveis no hardware real.
+
+## Prioridade técnica para o SNIPER
+
+O perfil atual é i5-4670K + RX 460 4 GB. Antes de integrar mais mineradores, corrija Huge Pages se o diagnóstico mostrar `0%`. RandomX precisa aproximadamente de 2 MB de L3 por thread; por isso 3 threads continuam sendo o ponto inicial sensato para 6 MB de L3, mas o vencedor final deve vir de benchmark real.
+
+A RX 460 não é ativada automaticamente nesta branch. Mineradores modernos e algoritmos GPU mudam rapidamente e alguns projetos atuais não listam RX 460 como oficialmente suportada. A próxima etapa segura é um **capability probe** local: detectar OpenCL, VRAM, algoritmo e benchmark antes de permitir produção.
+
+## Pesquisa técnica 2026
+
+Veja `docs/RESEARCH-EFFICIENCY-2026.md` para o inventário verificado de XMRig, MoneroOcean Multi-Miner, MO-Miner, SRBMiner, LibreHardwareMonitor e trabalhos de DVFS/ML.
+
+Resumo das decisões:
+
+- **usar como referência/integração futura:** MoneroOcean Multi-Miner, MO-Miner capability probe, LibreHardwareMonitor, otimização estatística online;
+- **manter:** XMRig oficial como fallback/estável;
+- **não automatizar:** overclock, undervolt, BIOS, Secure Boot, drivers, cloud paga;
+- **não instalar como padrão na RX 460:** minerador cuja documentação atual não inclua esse modelo ou que não passe no capability probe;
+- **não usar:** projetos antigos sem manutenção como base do orquestrador atual.
+
+## Arquivos principais
+
+```text
+server-v4.js                 backend estável
+index-v4.html                interface atual
+lib/goldbrain.js             estimador de produção/ETA/risco
+lib/efficiency-brain.js      motor R$/W em modo sombra
+tools/efficiency-audit.js    auditoria passiva
+test/*.test.js               testes matemáticos
+worker-agent.js              worker autorizado HMAC
+hardware-profile.json        referência histórica do SNIPER
+```
+
+## Validação
+
+```bash
+npm run check
+npm test
+```
+
+## Limites reais
+
+IdeaGold pode reduzir desperdício, escolher configurações melhores e detectar quando uma configuração custa mais do que rende. Ele não altera a probabilidade matemática do PoW e não cria energia ou hashrate gratuito. Em hardware antigo com tarifa alta, a melhor decisão econômica pode ser reduzir carga ou não minerar; o software deve mostrar isso em vez de simular lucro.
