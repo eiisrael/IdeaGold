@@ -14,16 +14,24 @@ class BenchmarkEngine extends EventEmitter{
   }
   status(){return {...this.progress,running:this.running};}
   cancel(){this.cancelled=true;this.progress={...this.progress,state:'cancelling'};}
+  async restorePrevious(ctx,previousState,reason='benchmark-rollback'){
+    if(!ctx||!previousState)return;
+    if(previousState.processRunning){
+      await this.controller.restart({...ctx,profile:previousState.profile||ctx.profile},reason);
+    }else{
+      this.controller.stop(reason);
+    }
+  }
   async runCandidate(config,{objective='balanced',warmupSec=30,sampleSec=90,label='candidate',baseline=null}={}){
     if(this.running)throw new Error('Já existe benchmark em andamento.');
     this.running=true;this.cancelled=false;
-    const id=crypto.randomUUID();
+    const id=crypto.randomUUID();let ctx=null,previousState=null,applied=false,restored=false;
     try{
-      const ctx=this.getContext();
+      ctx=this.getContext();previousState=this.controller.state();
       const valid=this.safety.validateCandidate(config,ctx.hardware);
       if(!valid.ok)throw new Error(`Configuração rejeitada: ${valid.errors.join(', ')}`);
       this.progress={id,state:'applying',label,objective,config,warmupSec,sampleSec,startedAt:Date.now()};this.emit('progress',this.status());
-      await this.controller.restart({...ctx,profile:config},'benchmark');
+      await this.controller.restart({...ctx,profile:config},'benchmark');applied=true;
       for(let i=0;i<warmupSec;i++){
         if(this.cancelled)throw new Error('benchmark-cancelled');
         this.progress={...this.progress,state:'warmup',remaining:warmupSec-i};this.emit('progress',this.status());await sleep(1000);
@@ -51,11 +59,11 @@ class BenchmarkEngine extends EventEmitter{
         stability:S.stabilityScore(hashes),samples:samples.length,durationSec:sampleSec,
         confidence:S.confidenceScore({samples:samples.length,seconds:sampleSec,shares:accepted,rateCv:S.cv(hashes)||1,poolFresh:samples.some(x=>x.poolFresh),powerMeasured:samples.some(x=>x.powerKind==='measured')})
       };
-      result.profitBrlDay=samples.at(-1)?.profitBrlDay ?? null;
+      result.profitBrlDay=samples.at(-1)?.profitBrlDay??null;
       result.objectiveValue=objectiveValue(objective,result);
       const safety=baseline?this.safety.compare(baseline,result):{safe:true,reason:'baseline inicial'};
       result.safe=safety.safe;result.safetyReason=safety.reason;
-      if(!safety.safe)result.status='rollback'; else result.status='complete';
+      result.status=safety.safe?'complete':'rollback';
       this.db.addBenchmark({
         hardware_fingerprint:this.hardwareFingerprint,objective,profile_name:label,config,
         duration_sec:sampleSec,samples:result.samples,hashrate:result.hashrate,power_w:result.powerW,temperature_c:result.temperatureC,
@@ -63,10 +71,12 @@ class BenchmarkEngine extends EventEmitter{
         score:result.objectiveValue,confidence:result.confidence,status:result.status,notes:result.safetyReason
       });
       if(baseline)result.comparison=explain(objective,baseline,result);
+      if(!result.safe){await this.restorePrevious(ctx,previousState,'benchmark-unsafe-rollback');restored=true;}
       this.progress={...this.progress,state:result.status,result,finishedAt:Date.now()};this.emit('progress',this.status());
       return result;
     }catch(error){
-      this.progress={...this.progress,state:error.message==='benchmark-cancelled'?'cancelled':'error',error:error.message,finishedAt:Date.now()};this.emit('progress',this.status());
+      if(applied&&!restored){try{await this.restorePrevious(ctx,previousState,'benchmark-error-rollback');restored=true;}catch(rollbackError){error.message+=` | rollback falhou: ${rollbackError.message}`;}}
+      this.progress={...this.progress,state:error.message.startsWith('benchmark-cancelled')?'cancelled':'error',error:error.message,finishedAt:Date.now()};this.emit('progress',this.status());
       throw error;
     }finally{this.running=false;}
   }
