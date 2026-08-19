@@ -41,7 +41,36 @@ Janelas de retenção:
 - network: 15 min;
 - market: 30 min.
 
-Valor retido recebe `cached/stale/staleSec/sourceError`. Não é chamado de ao vivo. O crescimento observado do pool só adiciona **um ponto por refresh real**, evitando que um mesmo snapshot em cache aumente artificialmente a confiança da ETA.
+Valor retido recebe `cached/sourceStale/staleSec/sourceError`. Não é chamado de ao vivo. O campo `stale` permanece reservado à contagem de stale shares fornecida pelo pool. O crescimento observado do pool só adiciona **um ponto por refresh real**, evitando que um mesmo snapshot em cache aumente artificialmente a confiança da ETA.
+
+## Hotfix V5.1.1 — erro SQLite encontrado em máquina real
+
+O bundle de diagnóstico de 19/08/2026 revelou uma colisão de tipos que os testes anteriores não reproduziam: o cache de fonte reutilizava o nome `stale` como booleano, mas `pool_snapshots.stale` é uma coluna INTEGER destinada à contagem de stale shares. No Node 26, o SQLite embutido rejeitou `true/false` com:
+
+`Provided value cannot be bound to SQLite parameter 8.`
+
+Consequências observadas:
+
+- o Telemetry Engine abortava o tick antes de publicar uma nova amostra;
+- o frontend permanecia em `INICIALIZANDO`/`OFF` mesmo depois de `POST /api/miner/start -> 200`;
+- Benchmark/Supreme Mind também falhavam porque dependem de uma amostra válida;
+- parecia que o botão de mineração não funcionava.
+
+Correção V5.1.1:
+
+- `stale` voltou a significar exclusivamente **número de stale shares**;
+- estado do cache usa `sourceStale` + `cached` + `staleSec`;
+- foram adicionados testes de regressão que persistem snapshots reais no SQLite.
+
+## Hotfix V5.1.1 — pré-validação da pool
+
+O mesmo diagnóstico mostrou o XMRig repetindo:
+
+`gulf.moneroocean.stream:20128 DNS error: "unknown node or service"`
+
+Antes de spawnar o XMRig, o IdeaGold agora testa DNS + TLS da pool. Para MoneroOcean ele tenta primeiro `gulf.moneroocean.stream` e, se o endpoint principal não resolver/conectar, tenta o endpoint oficial alternativo `sg.moneroocean.stream`. Nenhum IP é fixado e nenhum DNS de segurança é contornado.
+
+Se nenhum endpoint estiver acessível, o start retorna erro explícito à interface em vez de mostrar “Minerador iniciado” enquanto o XMRig fica sem pool.
 
 ## Causa 3 — ticks sobrepostos
 
