@@ -15,6 +15,7 @@ const {scorePool}=require('../providers/pool/score');
 const {P2PoolManager}=require('../providers/pool/p2pool-manager');
 const {SettingsStore}=require('./settings');
 const {verifyWorkerSignature,normalizeWorkerPayload}=require('./worker-auth');
+const {telemetrySsePayload}=require('./contracts');
 const {TelemetryEngine}=require('../telemetry/engine');
 const {AnomalyDetector}=require('../optimizer/anomaly-detector');
 const {SafetyEngine}=require('../optimizer/safety-engine');
@@ -69,7 +70,7 @@ setInterval(()=>p2pool.status().then(v=>p2poolStatusCache=v).catch(()=>{}),30000
 
 const sseClients=new Set();
 function emitSse(event,data){const text=`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;for(const res of [...sseClients]){try{res.write(text);}catch{sseClients.delete(res);}}}
-telemetry.on('sample',sample=>{emitSse('telemetry',publicStatus(sample));supreme.observe(sample).catch(e=>logger.error('supreme','observe-error','Falha ao observar telemetria.',e));});
+telemetry.on('sample',sample=>{emitSse('telemetry',telemetrySsePayload(sample));supreme.observe(sample).catch(e=>logger.error('supreme','observe-error','Falha ao observar telemetria.',e));});
 telemetry.on('error',error=>{logger.error('telemetry','error','Erro do Telemetry Engine.',error);emitSse('error',{message:error.message});});
 benchmark.on('progress',p=>{logger.debug('benchmark','progress','Progresso do benchmark.',p);emitSse('benchmark',p);});
 supreme.on('state',s=>emitSse('supreme',s));
