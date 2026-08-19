@@ -3,12 +3,15 @@
 const {validWallet,normalizeConfig}=require('../miner/config-manager');
 
 function defaults(hardware){
-  const threads=Math.max(1,Math.min(Number(hardware?.logicalThreads||1),Number(hardware?.cpuModel||'').includes('i5-4670K')?3:Math.max(1,Math.round(Number(hardware?.logicalThreads||1)*.75))));
+  const logicalThreads=Math.max(1,Math.round(Number(hardware?.logicalThreads||1)));
+  const cpuModel=String(hardware?.cpuModel||'');
+  const preferredThreads=cpuModel.includes('i5-4670K')?3:Math.max(1,Math.round(logicalThreads*.75));
+  const threads=Math.max(1,Math.min(logicalThreads,preferredThreads));
   return {
     wallet:'',poolId:'moneroocean',workerName:'IdeaGold',electricityBrlKWh:0.90,poolFeePct:0,
     objective:'balanced',supremeMindEnabled:false,basicMode:true,activeProfile:'default',
     profile:normalizeConfig({threads,priority:3,yield:true,hugePages:true,hugePagesJit:true,rdmsr:true,wrmsr:true,numa:true,randomxMode:'fast',scratchpadPrefetch:1}),
-    measuredPowerWatts:0,basePowerWatts:30,cpuPowerWatts:75,logicalThreads:Number(hardware?.logicalThreads||1),
+    measuredPowerWatts:0,basePowerWatts:30,cpuPowerWatts:75,logicalThreads,
     thermalWarningC:75,thermalCriticalC:85,maxRejectRate:.05,minHashrateRatio:.82,requireHugePages:false,
     benchmarkWarmupSec:20,benchmarkSampleSec:60,maxAutotuneExperiments:4,
     pauseCpuLoadPct:0,resumeAfterMinutes:5,p2poolHost:'127.0.0.1',p2poolPort:3333,p2poolDataApi:'',p2poolSidechain:'mini',
