@@ -1,276 +1,139 @@
-from pathlib import Path
-
-html = r"""<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Nimbus Hash Router — Cloud Mining Intelligence</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070908">
+<title>IdeaGold 2.0 — GoldMesh</title>
 <style>
-  :root{
-    --bg:#070b14;--panel:#0e1525;--panel2:#111b30;--text:#eef4ff;--muted:#8ea1c4;
-    --line:#1d2b49;--accent:#63f3c7;--accent2:#6d8cff;--warn:#ffcc66;--bad:#ff6b7a;
-    --shadow:0 20px 60px rgba(0,0,0,.35)
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;background:
-      radial-gradient(1000px 600px at 10% -10%,rgba(109,140,255,.18),transparent 55%),
-      radial-gradient(900px 700px at 90% 0%,rgba(99,243,199,.12),transparent 55%),var(--bg);
-    color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
-  }
-  .wrap{max-width:1220px;margin:auto;padding:28px}
-  .top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:24px}
-  .brand{display:flex;gap:12px;align-items:center}
-  .logo{
-    width:44px;height:44px;border-radius:14px;background:
-    conic-gradient(from 220deg,var(--accent),var(--accent2),#9d6cff,var(--accent));
-    box-shadow:0 0 40px rgba(99,243,199,.22);position:relative
-  }
-  .logo:after{content:"";position:absolute;inset:9px;border-radius:9px;background:var(--bg)}
-  h1{font-size:21px;margin:0}.sub{font-size:12px;color:var(--muted);margin-top:3px}
-  .badge{border:1px solid var(--line);background:rgba(255,255,255,.025);padding:9px 12px;border-radius:999px;color:var(--muted);font-size:12px}
-  .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
-  .card{background:linear-gradient(180deg,rgba(17,27,48,.97),rgba(11,17,31,.97));border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
-  .card h2{font-size:14px;margin:0 0 16px;color:#dce8ff}
-  .pad{padding:20px}
-  .inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-  label{display:block;font-size:11px;color:var(--muted);margin:0 0 6px}
-  input,select{
-    width:100%;border:1px solid var(--line);background:#0a1221;color:var(--text);padding:11px 12px;border-radius:12px;
-    outline:none;transition:.2s
-  }
-  input:focus,select:focus{border-color:#496aa5;box-shadow:0 0 0 3px rgba(109,140,255,.08)}
-  .buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-  button{
-    border:0;border-radius:12px;padding:11px 14px;font-weight:700;cursor:pointer;
-    background:linear-gradient(135deg,var(--accent),#57d7ff);color:#041018
-  }
-  button.alt{background:#101b30;color:#dce8ff;border:1px solid var(--line)}
-  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
-  .kpi{padding:15px;border:1px solid var(--line);border-radius:16px;background:#0a1221}
-  .kpi .t{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-  .kpi .v{font-size:22px;margin-top:7px;font-weight:800}.good{color:var(--accent)}.bad{color:var(--bad)}.warn{color:var(--warn)}
-  .mini{font-size:11px;color:var(--muted);margin-top:4px}
-  .table{overflow:auto;border-top:1px solid var(--line)}
-  table{width:100%;border-collapse:collapse;min-width:720px}
-  th,td{padding:12px 15px;border-bottom:1px solid #17243d;text-align:right;font-size:12px}
-  th:first-child,td:first-child{text-align:left}
-  th{color:var(--muted);font-weight:600;background:#0d1628;position:sticky;top:0}
-  tr:hover td{background:rgba(255,255,255,.015)}
-  .score{display:inline-flex;align-items:center;gap:7px}
-  .dot{width:8px;height:8px;border-radius:99px;background:var(--accent);box-shadow:0 0 14px rgba(99,243,199,.45)}
-  .chart{height:220px;padding:12px}
-  canvas{width:100%;height:100%}
-  .note{font-size:11px;color:var(--muted);line-height:1.55;margin-top:12px}
-  .row{display:flex;justify-content:space-between;gap:12px;align-items:center}
-  .status{font-size:11px;color:var(--muted)}
-  .pill{font-size:10px;padding:5px 8px;border:1px solid var(--line);border-radius:999px;color:var(--accent)}
-  .footer{padding:18px 2px;color:#6f82a6;font-size:10px;line-height:1.6}
-  @media(max-width:900px){.grid{grid-template-columns:1fr}.inputs{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.wrap{padding:16px}.top{align-items:flex-start}}
+:root{
+  --bg:#070908;--bg2:#0c0f0d;--panel:#111512;--panel2:#151b16;--line:#283126;
+  --gold:#f4c75b;--gold2:#9f7a27;--mint:#71f0b3;--red:#ff6b75;--blue:#78a8ff;
+  --text:#f4f1e7;--muted:#98a398;--shadow:0 28px 80px rgba(0,0,0,.38);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(900px 480px at 18% -8%,rgba(244,199,91,.13),transparent 60%),
+    radial-gradient(900px 600px at 100% 10%,rgba(113,240,179,.07),transparent 60%),
+    linear-gradient(180deg,#070908,#090c0a 55%,#050706);
+  min-height:100vh
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1480px;margin:auto;padding:18px}
+.topbar{
+  position:sticky;top:0;z-index:50;margin:-18px -18px 18px;padding:14px 18px;
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  background:rgba(7,9,8,.83);backdrop-filter:blur(18px);border-bottom:1px solid rgba(244,199,91,.12)
+}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{
+  width:42px;height:42px;border-radius:14px;position:relative;overflow:hidden;
+  background:conic-gradient(from 210deg,#7e5a18,var(--gold),#fff0aa,#8f6620,#7e5a18);
+  box-shadow:0 0 32px rgba(244,199,91,.15)
+}
+.mark:after{content:"";position:absolute;inset:9px;border-radius:10px;background:#080b09;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.brand h1{font-size:17px;margin:0;letter-spacing:.02em}.brand small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.status{display:flex;gap:7px;align-items:center;font-size:11px;color:var(--muted);padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:#0b0f0c}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 14px currentColor}.dot.ok{background:var(--mint)}
+.btn{
+  border:1px solid rgba(244,199,91,.28);color:#171106;padding:10px 14px;border-radius:12px;font-weight:800;
+  background:linear-gradient(135deg,#ffe08a,var(--gold));box-shadow:0 8px 24px rgba(244,199,91,.09)
+}
+.btn.secondary{background:#111612;color:var(--text);border-color:var(--line);box-shadow:none}
+.btn.danger{background:#221113;color:#ffccd0;border-color:#542329;box-shadow:none}
+.nav{
+  display:flex;gap:6px;overflow:auto;margin-bottom:16px;padding:5px;border:1px solid var(--line);
+  border-radius:15px;background:rgba(12,15,13,.8);width:max-content;max-width:100%
+}
+.nav button{border:0;color:var(--muted);background:transparent;border-radius:10px;padding:9px 13px;font-weight:700;white-space:nowrap}
+.nav button.active{color:#161006;background:linear-gradient(135deg,#ffe49b,var(--gold))}
+.page{display:none}.page.active{display:block}
+.hero{display:grid;grid-template-columns:1.4fr .8fr;gap:16px;margin-bottom:16px}
+.card{background:linear-gradient(180deg,rgba(21,27,22,.97),rgba(12,16,13,.97));border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.pad{padding:19px}
+.eyebrow{text-transform:uppercase;letter-spacing:.15em;font-size:10px;color:var(--gold);font-weight:900}
+h2{font-size:31px;line-height:1.05;margin:8px 0 10px;max-width:800px}
+h3{font-size:14px;margin:0;color:#f3e9ce}.muted{color:var(--muted)}
+.hero p{color:#aeb9af;max-width:820px;line-height:1.6;font-size:13px}
+.heroGlow{position:relative;min-height:230px;background:radial-gradient(280px 180px at 65% 35%,rgba(244,199,91,.17),transparent 65%),linear-gradient(160deg,#161d16,#0d110e)}
+.orbit{position:absolute;inset:18px;border:1px solid rgba(244,199,91,.15);border-radius:50%}.orbit.o2{inset:48px;border-color:rgba(113,240,179,.13)}
+.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:104px;height:104px;border-radius:32px;background:linear-gradient(145deg,#312716,#16140e);border:1px solid rgba(244,199,91,.28);display:grid;place-items:center;box-shadow:0 0 70px rgba(244,199,91,.12);font-size:36px;font-weight:950;color:var(--gold)}
+.pulse{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--mint);box-shadow:0 0 18px var(--mint)}.p1{left:16%;top:35%}.p2{right:18%;top:25%;background:var(--gold);box-shadow:0 0 18px var(--gold)}.p3{right:28%;bottom:18%;background:var(--blue);box-shadow:0 0 18px var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.span3{grid-column:span 3}.span4{grid-column:span 4}.span5{grid-column:span 5}.span6{grid-column:span 6}.span7{grid-column:span 7}.span8{grid-column:span 8}.span12{grid-column:span 12}
+.metric{padding:16px}.metric .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}.metric .value{font-size:25px;font-weight:900;margin-top:7px}.metric .sub{font-size:10px;color:var(--muted);margin-top:5px}
+.gold{color:var(--gold)}.green{color:var(--mint)}.red{color:var(--red)}.blue{color:var(--blue)}
+.cardHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;border-bottom:1px solid var(--line)}.cardHead small{color:var(--muted)}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.field label{display:block;color:var(--muted);font-size:10px;margin-bottom:6px;font-weight:700}
+.field input,.field select,.field textarea{width:100%;color:var(--text);background:#0a0e0b;border:1px solid #273027;border-radius:12px;padding:11px 12px;outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:#7d6428;box-shadow:0 0 0 3px rgba(244,199,91,.06)}
+.field textarea{min-height:120px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.notice{padding:12px 14px;border:1px solid #3b3522;border-radius:13px;background:#15130d;color:#d8c999;font-size:11px;line-height:1.5}.notice.safe{border-color:#214735;background:#0d1712;color:#a7e9c8}.notice.bad{border-color:#51232b;background:#1a0f12;color:#ffc4ca}
+.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px 15px;border-bottom:1px solid #202920;font-size:11px;text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-weight:700;background:#0d120e}
+.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:5px 8px;font-size:10px;color:var(--muted)}.chip .dot{width:6px;height:6px}
+.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;background:#090c0a;border:1px solid var(--line);border-radius:13px;padding:13px;overflow:auto;white-space:pre-wrap}.spark{height:100px;width:100%}.spark canvas{width:100%;height:100%}
+.list{display:grid;gap:9px}.listItem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#0b0f0c}.listItem b{font-size:12px}.listItem small{color:var(--muted);display:block;margin-top:3px}
+.footer{color:#69756b;font-size:10px;line-height:1.6;padding:20px 3px}.toast{position:fixed;right:18px;bottom:18px;z-index:99;max-width:360px;padding:13px 15px;border-radius:13px;background:#161d17;border:1px solid #354136;box-shadow:var(--shadow);display:none;font-size:12px}.toast.show{display:block}.toast.err{border-color:#6b2a32;color:#ffc7cd}
+@media(max-width:1050px){.hero{grid-template-columns:1fr}.span3{grid-column:span 6}.span4,.span5,.span6,.span7,.span8{grid-column:span 12}}@media(max-width:650px){.shell{padding:12px}.topbar{margin:-12px -12px 14px;padding:12px}.actions .btn{display:none}h2{font-size:25px}.span3{grid-column:span 12}.formgrid{grid-template-columns:1fr}.pad{padding:15px}.heroGlow{min-height:190px}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div class="brand">
-      <div class="logo"></div>
-      <div>
-        <h1>Nimbus Hash Router</h1>
-        <div class="sub">Inteligência de alocação para mineração em nuvem / SHA‑256</div>
-      </div>
-    </div>
-    <div class="badge" id="networkBadge">rede: aguardando dados</div>
-  </div>
+<div class="shell">
+<header class="topbar"><div class="brand"><div class="mark"></div><div><h1>IdeaGold <span class="gold">2.0</span></h1><small>GoldMesh Mining & Exchange Console</small></div></div><div class="actions"><div class="status"><span class="dot" id="serverDot"></span><span id="serverStatus">conectando</span></div><button class="btn secondary" onclick="refreshAll()">Atualizar</button></div></header>
+<nav class="nav" id="nav"><button class="active" data-page="dashboard">Dashboard</button><button data-page="workers">GoldMesh Workers</button><button data-page="mining">Mineração</button><button data-page="exchange">Carteira & Exchange</button><button data-page="setup">Setup</button></nav>
+<main>
+<section class="page active" id="dashboard">
+<div class="hero"><div class="card pad"><div class="eyebrow">Distributed Proof-of-Work Console</div><h2>Minere onde você controla o hardware. <span class="gold">Meça tudo.</span> Converta sem esconder o risco.</h2><p>GoldMesh une workers XMRig autorizados, P2Pool/pools, telemetria assinada, preço de mercado, custo elétrico/cloud e conversão via exchange. O painel não guarda seed phrase e trading real nasce desligado.</p><div class="row"><button class="btn" onclick="go('workers')">Adicionar worker</button><button class="btn secondary" onclick="go('mining')">Calcular rentabilidade</button><span class="chip"><span class="dot ok"></span> sem shell remoto</span></div></div><div class="card heroGlow"><div class="orbit"></div><div class="orbit o2"></div><div class="pulse p1"></div><div class="pulse p2"></div><div class="pulse p3"></div><div class="core">Au</div></div></div>
+<div class="grid"><div class="card metric span3"><div class="label">Workers online</div><div class="value green" id="mWorkers">0</div><div class="sub" id="mWorkersSub">0 registrados</div></div><div class="card metric span3"><div class="label">Hashrate ativo</div><div class="value gold" id="mHash">0 H/s</div><div class="sub">somatório de heartbeats recentes</div></div><div class="card metric span3"><div class="label">BTC / BRL</div><div class="value" id="mBtc">—</div><div class="sub" id="mBtcCh">CoinGecko</div></div><div class="card metric span3"><div class="label">XMR / BRL</div><div class="value" id="mXmr">—</div><div class="sub" id="mXmrCh">CoinGecko</div></div>
+<div class="card span7"><div class="cardHead"><div><h3>GoldMesh ao vivo</h3><small>Workers que reportaram nos últimos 45 s</small></div><button class="btn secondary" onclick="refreshWorkers()">Recarregar</button></div><div class="tableWrap"><table><thead><tr><th>Worker</th><th>Moeda</th><th>Hashrate</th><th>Aceitas</th><th>Pool</th><th>Status</th></tr></thead><tbody id="dashWorkers"></tbody></table></div></div>
+<div class="card span5 pad"><h3>Profit Guard</h3><p class="muted" style="font-size:12px;line-height:1.6">A V2 separa telemetria de decisão financeira. O minerador continua sob seu controle; o painel sinaliza quando custo, uptime ou preço tornam o cenário ruim.</p><div class="list"><div class="listItem"><div><b>Trading real</b><small>Proteção de execução</small></div><span class="chip" id="tradeMode">desligado</span></div><div class="listItem"><div><b>Heartbeat HMAC</b><small>workers não expõem XMRig publicamente</small></div><span class="chip green">ativo</span></div><div class="listItem"><div><b>Seed phrase</b><small>nunca solicitada</small></div><span class="chip green">não-custodial</span></div></div></div></div>
+</section>
+<section class="page" id="workers"><div class="grid"><div class="card span8"><div class="cardHead"><div><h3>Workers registrados</h3><small>XMRig → API local → worker-agent → GoldMesh</small></div><button class="btn secondary" onclick="refreshWorkers()">Atualizar</button></div><div class="tableWrap"><table><thead><tr><th>Nome</th><th>Host</th><th>Hashrate atual</th><th>60s</th><th>15m</th><th>Shares</th><th>Visto</th></tr></thead><tbody id="workersTable"></tbody></table></div></div><div class="card span4 pad"><div class="eyebrow">Worker seguro</div><h3 style="margin-top:8px">Como conectar uma máquina</h3><div class="notice safe" style="margin:12px 0">Deixe a HTTP API do XMRig em <b>127.0.0.1</b>. O agente lê localmente e envia só métricas assinadas ao painel.</div><div class="code">IDEAGOLD_SERVER=https://SEU-PAINEL
+WORKER_SHARED_SECRET=SEU_SEGREDO
+WORKER_ID=rig-01
+WORKER_NAME=VPS-01
+XMRIG_API=http://127.0.0.1:18080/2/summary
 
-  <div class="grid">
-    <section class="card pad">
-      <div class="row">
-        <h2>Motor de rentabilidade</h2>
-        <span class="pill">client-side • sem custódia</span>
-      </div>
-
-      <div class="inputs">
-        <div><label>Hashrate contratado (TH/s)</label><input id="hashrate" type="number" min="0" step="0.01" value="100"></div>
-        <div><label>Custo do contrato (US$/TH/dia)</label><input id="cloudCost" type="number" min="0" step="0.0001" value="0.055"></div>
-        <div><label>Preço BTC (US$)</label><input id="btcPrice" type="number" min="1" step="1" value="60000"></div>
-        <div><label>Dificuldade da rede</label><input id="difficulty" type="number" min="1" step="1" value="90000000000000"></div>
-        <div><label>Recompensa por bloco (BTC)</label><input id="reward" type="number" min="0" step="0.0001" value="3.125"></div>
-        <div><label>Uptime esperado (%)</label><input id="uptime" type="number" min="1" max="100" step="0.1" value="99.2"></div>
-      </div>
-
-      <div class="buttons">
-        <button id="liveBtn">Atualizar dados públicos</button>
-        <button class="alt" id="calcBtn">Recalcular</button>
-        <button class="alt" id="exportBtn">Exportar cenário</button>
-      </div>
-
-      <div class="kpis">
-        <div class="kpi"><div class="t">Receita estimada/dia</div><div class="v" id="gross">$0.00</div><div class="mini" id="grossBtc">0 BTC</div></div>
-        <div class="kpi"><div class="t">Lucro líquido/dia</div><div class="v" id="net">$0.00</div><div class="mini" id="margin">margem 0%</div></div>
-        <div class="kpi"><div class="t">Break-even do custo</div><div class="v" id="breakeven">$0.0000</div><div class="mini">US$/TH/dia máximo</div></div>
-      </div>
-
-      <div class="note">
-        O motor calcula produção probabilística esperada a partir da dificuldade da rede, hashrate, recompensa de bloco, uptime e taxas.
-        Ele não promete lucro nem “cria” bitcoins no navegador; serve para decidir onde um hashrate real já contratado pode ser alocado com menor desperdício.
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="pad">
-        <div class="row"><h2>Roteador de pools</h2><span class="status" id="updated">modelo local</span></div>
-        <div class="inputs">
-          <div><label>Taxa de saque estimada (US$/dia)</label><input id="withdrawCost" type="number" value="0.20" min="0" step="0.01"></div>
-          <div><label>Reserva de risco (%)</label><input id="riskReserve" type="number" value="2.5" min="0" max="50" step="0.1"></div>
-        </div>
-      </div>
-      <div class="table">
-        <table>
-          <thead><tr><th>Pool / perfil</th><th>Fee</th><th>Variação</th><th>Líquido/dia</th><th>Score</th></tr></thead>
-          <tbody id="poolRows"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="pad"><div class="row"><h2>Projeção de 30 dias</h2><span class="status">sem reinvestimento automático</span></div></div>
-      <div class="chart"><canvas id="chart"></canvas></div>
-    </section>
-
-    <section class="card pad">
-      <h2>Alocação sugerida</h2>
-      <div id="allocation"></div>
-      <div class="note">
-        O “Nimbus Spread” usa uma heurística de risco: evita concentrar 100% do hashrate na maior estimativa quando a vantagem líquida é pequena.
-        Isso reduz exposição a variação de recompensa, downtime e diferenças de payout.
-      </div>
-    </section>
-  </div>
-
-  <div class="footer">
-    Ferramenta educacional e operacional. Rentabilidade de mineração varia com dificuldade, preço do ativo, regras do pool, disponibilidade, contratos e taxas.
-    Nunca informe seed phrase ou chave privada. Chaves de API com permissão de saque não devem ser colocadas em páginas locais.
-  </div>
-</div>
-
+node worker-agent.js</div></div><div class="card span12 pad"><h3>Por que isso é “cloud” de verdade?</h3><p class="muted" style="font-size:12px;line-height:1.6">Você pode instalar o agente em máquinas físicas, VPS ou instâncias cloud em que mineração seja expressamente permitida. O painel agrega tudo em uma malha única sem fornecer shell remoto, persistência escondida ou download silencioso de mineradores.</p></div></div></section>
+<section class="page" id="mining"><div class="grid"><div class="card span7 pad"><div class="cardHead" style="padding:0 0 16px;border:0"><div><h3>Motor de rentabilidade PoW</h3><small>Modelo probabilístico, não promessa de ganho</small></div></div><div class="formgrid"><div class="field"><label>Algoritmo</label><select id="pAlgo"><option value="randomx">RandomX / Monero-like</option><option value="sha256">SHA-256 / Bitcoin-like</option></select></div><div class="field"><label>Hashrate em H/s</label><input id="pHash" type="number" value="10000" min="0"></div><div class="field"><label>Dificuldade da rede</label><input id="pDiff" type="number" value="350000000000" min="1"></div><div class="field"><label>Recompensa por bloco</label><input id="pReward" type="number" value="0.6" step="0.000001"></div><div class="field"><label>Preço do ativo (BRL)</label><input id="pPrice" type="number" value="1800" step="0.01"></div><div class="field"><label>Taxa do pool (%)</label><input id="pFee" type="number" value="1" step="0.1"></div><div class="field"><label>Uptime (%)</label><input id="pUptime" type="number" value="99" step="0.1"></div><div class="field"><label>Consumo (W)</label><input id="pPower" type="number" value="120"></div><div class="field"><label>Energia (R$/kWh)</label><input id="pElectric" type="number" value="0.95" step="0.01"></div><div class="field"><label>Custo cloud/VPS por dia (R$)</label><input id="pCloud" type="number" value="0" step="0.01"></div></div><div class="row" style="margin-top:13px"><button class="btn" onclick="calcProfit()">Calcular</button><button class="btn secondary" onclick="useLiveXmrPrice()">Usar preço XMR</button><button class="btn secondary" onclick="useLiveBtcPrice()">Usar preço BTC</button></div></div>
+<div class="card span5 pad"><div class="eyebrow">Resultado</div><div class="grid" style="margin-top:10px"><div class="span6 metric" style="padding:10px"><div class="label">Receita/dia</div><div class="value" id="rRevenue">R$ 0</div></div><div class="span6 metric" style="padding:10px"><div class="label">Custo/dia</div><div class="value" id="rCost">R$ 0</div></div><div class="span6 metric" style="padding:10px"><div class="label">Líquido/dia</div><div class="value" id="rNet">R$ 0</div></div><div class="span6 metric" style="padding:10px"><div class="label">Margem</div><div class="value" id="rMargin">0%</div></div></div><div class="notice" id="profitNotice" style="margin-top:12px">Preencha os dados da rede e do equipamento.</div><div class="spark"><canvas id="profitChart"></canvas></div></div>
+<div class="card span7 pad"><h3>Gerador XMRig / P2Pool</h3><div class="formgrid" style="margin-top:12px"><div class="field"><label>Carteira de mineração</label><input id="xWallet" placeholder="Endereço público da carteira"></div><div class="field"><label>Pool / Stratum</label><input id="xPool" value="127.0.0.1:3333"></div><div class="field"><label>Worker</label><input id="xWorker" value="ideagold-rig"></div><div class="field"><label>Backend</label><select id="xBackend"><option value="cpu">CPU</option><option value="opencl">AMD/OpenCL</option><option value="cuda">NVIDIA/CUDA</option></select></div></div><div class="row" style="margin-top:12px"><button class="btn" onclick="generateXmrig()">Gerar config.json</button><button class="btn secondary" onclick="copyConfig()">Copiar</button></div></div><div class="card span5 pad"><h3>config.json</h3><pre class="code" id="xmrigOut" style="min-height:220px">Aguardando dados…</pre></div></div></section>
+<section class="page" id="exchange"><div class="grid"><div class="card span5 pad"><div class="eyebrow">Exchange Router</div><h3 style="margin-top:8px">Cotação e conversão</h3><div class="notice safe" style="margin:12px 0">Cotação é pública. Ordem real só funciona com credenciais no servidor, trading ativado e confirmação textual.</div><div class="formgrid"><div class="field"><label>Exchange</label><select id="eExchange"><option value="mercado">Mercado Bitcoin</option><option value="kraken">Kraken</option></select></div><div class="field"><label>Par</label><input id="eSymbol" value="BTC/BRL"></div><div class="field"><label>Ação</label><select id="eSide"><option value="sell">Vender base</option><option value="buy">Comprar base</option></select></div><div class="field"><label>Quantidade do ativo base</label><input id="eAmount" type="number" value="0.001" step="0.00000001"></div></div><div class="row" style="margin-top:12px"><button class="btn" onclick="quoteExchange()">Cotar</button><button class="btn secondary" onclick="loadBalance()">Ver saldo</button></div><div id="quoteBox" class="notice" style="margin-top:12px">Nenhuma cotação ainda.</div></div>
+<div class="card span7 pad"><div class="row" style="justify-content:space-between"><div><h3>Conversão REAL</h3><span class="muted" style="font-size:10px">Ex.: vender BTC/BRL transforma BTC da exchange em saldo BRL.</span></div><span class="chip" id="exchangeMode">verificando</span></div><div class="formgrid" style="margin-top:14px"><div class="field"><label>Confirmação obrigatória</label><input id="eConfirm" placeholder="CONVERTER_AGORA"></div><div class="field"><label>Proteção</label><input value="Limite MAX_LIVE_TRADE_BRL no servidor" disabled></div></div><div class="row" style="margin-top:12px"><button class="btn danger" onclick="liveConvert()">Executar ordem de mercado</button></div><div class="notice bad" style="margin-top:12px"><b>Importante:</b> a V2 converte ativos mantidos na exchange. Para dinheiro cair em banco/Pix, confirme o saque no ambiente oficial da corretora. Isso evita automatizar dados bancários/destinos sensíveis antes de você validá-los.</div><pre class="code" id="balanceOut" style="margin-top:12px;min-height:120px">Saldo privado ainda não consultado.</pre></div></div></section>
+<section class="page" id="setup"><div class="grid"><div class="card span6 pad"><h3>1. Servidor</h3><pre class="code" style="margin-top:12px">npm install
+cp .env.example .env
+node server.js</pre><div class="notice" style="margin-top:10px">Em produção, coloque o painel atrás de HTTPS/reverse proxy e não exponha o arquivo <b>.env</b>.</div></div><div class="card span6 pad"><h3>2. Segredo GoldMesh</h3><pre class="code" style="margin-top:12px">node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</pre><div class="notice safe" style="margin-top:10px">Use o mesmo segredo no painel e nos workers.</div></div><div class="card span6 pad"><h3>3. Exchange</h3><pre class="code" style="margin-top:12px">MERCADO_API_KEY=
+MERCADO_SECRET=
+ENABLE_LIVE_TRADING=false
+MAX_LIVE_TRADE_BRL=500</pre><div class="notice" style="margin-top:10px">Comece com trading desligado. Teste cotação, mercados e saldo antes de habilitar execução.</div></div><div class="card span6 pad"><h3>4. Princípios da V2</h3><div class="list" style="margin-top:12px"><div class="listItem"><div><b>Sem promessa de renda</b><small>rentabilidade muda com rede, preço e custo</small></div><span class="chip">realista</span></div><div class="listItem"><div><b>Sem mineração oculta</b><small>somente máquinas autorizadas</small></div><span class="chip green">explícito</span></div><div class="listItem"><div><b>Sem seed phrase</b><small>exchange keys ficam no servidor</small></div><span class="chip green">mínimo acesso</span></div></div></div></div></section>
+</main><footer class="footer">IdeaGold 2.0 / GoldMesh — mineração PoW e exchange console. Mineração em nuvem exige computação real e deve respeitar os termos do provedor. Valores e projeções não constituem garantia de retorno.</footer></div><div class="toast" id="toast"></div>
 <script>
-const $=id=>document.getElementById(id);
-const pools=[
-  {name:"PPS+ Estável",fee:0.025,var:0.004},
-  {name:"FPPS Baixa Taxa",fee:0.018,var:0.009},
-  {name:"PPLNS Agressivo",fee:0.010,var:0.030},
-  {name:"Solo-Hedge",fee:0.008,var:0.120}
-];
-
-function expectedBtcPerDay(hashTH,difficulty,reward,uptime){
-  const H=hashTH*1e12;
-  const hashesPerBlock=difficulty*Math.pow(2,32);
-  const blocksPerDay=(H*86400)/hashesPerBlock;
-  return blocksPerDay*reward*(uptime/100);
-}
-function money(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(n)}
-function num(n,d=4){return new Intl.NumberFormat('pt-BR',{maximumFractionDigits:d}).format(n)}
-function calc(){
-  const h=+$('hashrate').value||0,c=+$('cloudCost').value||0,p=+$('btcPrice').value||0,
-        d=+$('difficulty').value||1,r=+$('reward').value||0,u=+$('uptime').value||0,
-        wd=+$('withdrawCost').value||0,risk=+$('riskReserve').value||0;
-
-  const btc=expectedBtcPerDay(h,d,r,u);
-  const gross=btc*p;
-  const contract=h*c;
-  $('gross').textContent=money(gross);
-  $('grossBtc').textContent=num(btc,8)+" BTC";
-  const baselineNet=gross-contract-wd;
-  $('net').textContent=money(baselineNet);
-  $('net').className="v "+(baselineNet>=0?"good":"bad");
-  $('margin').textContent="margem "+(gross?num((baselineNet/gross)*100,1):0)+"%";
-  $('breakeven').textContent="$"+num(h?Math.max(0,(gross-wd)/h):0,4);
-
-  const scored=pools.map((x,i)=>{
-    const variancePenalty=gross*x.var*(risk/100)*8;
-    const net=(gross*(1-x.fee))-contract-wd-variancePenalty;
-    const score=net - Math.abs(net)*x.var*1.5;
-    return {...x,net,score};
-  }).sort((a,b)=>b.score-a.score);
-
-  $('poolRows').innerHTML=scored.map((x,i)=>`<tr>
-    <td><span class="score"><span class="dot" style="opacity:${1-i*.18}"></span>${x.name}</span></td>
-    <td>${num(x.fee*100,2)}%</td>
-    <td>${num(x.var*100,1)}%</td>
-    <td class="${x.net>=0?'good':'bad'}">${money(x.net)}</td>
-    <td>${num(x.score,2)}</td>
-  </tr>`).join("");
-
-  const best=scored[0], second=scored[1];
-  let splitA=75,splitB=25;
-  if(second && best.score!==0){
-    const advantage=(best.score-second.score)/Math.max(1,Math.abs(best.score));
-    if(advantage>.08){splitA=90;splitB=10}
-    if(advantage>.18){splitA=100;splitB=0}
-  }
-  $('allocation').innerHTML=`
-    <div class="kpis">
-      <div class="kpi"><div class="t">Primário</div><div class="v good">${splitA}%</div><div class="mini">${best.name}</div></div>
-      <div class="kpi"><div class="t">Hedge</div><div class="v">${splitB}%</div><div class="mini">${second?second.name:"—"}</div></div>
-      <div class="kpi"><div class="t">Hashrate efetivo</div><div class="v">${num(h*u/100,2)}</div><div class="mini">TH/s ajustado por uptime</div></div>
-    </div>`;
-  drawChart(baselineNet);
-}
-
-function drawChart(daily){
-  const c=$('chart'),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1;
-  const rect=c.getBoundingClientRect(); c.width=rect.width*dpr;c.height=rect.height*dpr;ctx.scale(dpr,dpr);
-  const w=rect.width,h=rect.height,pad=28;
-  ctx.clearRect(0,0,w,h);
-  ctx.strokeStyle="#1d2b49";ctx.lineWidth=1;
-  for(let i=0;i<5;i++){let y=pad+(h-2*pad)*i/4;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke()}
-  const vals=Array.from({length:30},(_,i)=>daily*(i+1));
-  const min=Math.min(0,...vals),max=Math.max(1,...vals);
-  const sx=i=>pad+(w-2*pad)*i/29;
-  const sy=v=>h-pad-(h-2*pad)*(v-min)/(max-min||1);
-  ctx.strokeStyle="#63f3c7";ctx.lineWidth=2.5;ctx.beginPath();
-  vals.forEach((v,i)=>i?ctx.lineTo(sx(i),sy(v)):ctx.moveTo(sx(i),sy(v)));ctx.stroke();
-  ctx.fillStyle="#8ea1c4";ctx.font="11px system-ui";ctx.fillText("D1",pad,h-8);ctx.fillText("D30",w-pad-22,h-8);
-  ctx.fillStyle=daily>=0?"#63f3c7":"#ff6b7a";ctx.fillText((daily>=0?"+":"")+money(daily*30),Math.max(pad,w-pad-100),18);
-}
-
-async function updateLive(){
-  const btn=$('liveBtn'); const old=btn.textContent; btn.textContent="Buscando…";btn.disabled=true;
-  let ok=0;
-  try{
-    const priceRes=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",{cache:"no-store"});
-    if(priceRes.ok){const j=await priceRes.json(); if(j.bitcoin?.usd){$('btcPrice').value=j.bitcoin.usd;ok++}}
-  }catch(e){}
-  try{
-    const diffRes=await fetch("https://mempool.space/api/v1/mining/hashrate/3d",{cache:"no-store"});
-    if(diffRes.ok){
-      const j=await diffRes.json();
-      if(j.currentDifficulty){$('difficulty').value=Math.round(j.currentDifficulty);ok++}
-    }
-  }catch(e){}
-  $('networkBadge').textContent=ok?`rede: ${ok}/2 fontes atualizadas`:"rede: APIs indisponíveis / CORS";
-  $('updated').textContent=new Date().toLocaleString('pt-BR');
-  btn.textContent=old;btn.disabled=false;calc();
-}
-
-function exportScenario(){
-  const keys=["hashrate","cloudCost","btcPrice","difficulty","reward","uptime","withdrawCost","riskReserve"];
-  const data=Object.fromEntries(keys.map(k=>[k,$(k).value]));
-  data.generatedAt=new Date().toISOString();
-  data.note="Cenário de análise; não contém chaves privadas nem credenciais.";
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nimbus-mining-scenario.json";a.click();URL.revokeObjectURL(a.href);
-}
-$('calcBtn').onclick=calc;$('liveBtn').onclick=updateLive;$('exportBtn').onclick=exportScenario;
-["hashrate","cloudCost","btcPrice","difficulty","reward","uptime","withdrawCost","riskReserve"].forEach(id=>$(id).addEventListener("input",calc));
-addEventListener("resize",()=>calc());
-calc();
+const $=id=>document.getElementById(id);let marketData={},workersData={},health={};
+function fmtBRL(n){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2}).format(Number(n)||0)}
+function fmtNum(n,d=2){return new Intl.NumberFormat('pt-BR',{maximumFractionDigits:d}).format(Number(n)||0)}
+function fmtHash(n){n=Number(n)||0;const units=['H/s','kH/s','MH/s','GH/s','TH/s','PH/s'];let i=0;while(n>=1000&&i<units.length-1){n/=1000;i++}return `${fmtNum(n,n<10?2:1)} ${units[i]}`}
+function toast(msg,err=false){const t=$('toast');t.textContent=msg;t.className='toast show'+(err?' err':'');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.className='toast',3800)}
+async function api(url,options={}){const r=await fetch(url,{...options,headers:{'content-type':'application/json',...(options.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||`HTTP ${r.status}`);return j}
+function go(page){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page));document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));scrollTo({top:0,behavior:'smooth'})}
+$('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(b)go(b.dataset.page)});
+async function refreshHealth(){try{health=await api('/api/health');$('serverDot').className='dot ok';$('serverStatus').textContent='GoldMesh online';$('tradeMode').textContent=health.trading?'ATIVADO':'desligado';$('tradeMode').className='chip '+(health.trading?'red':'')}catch(e){$('serverDot').className='dot';$('serverStatus').textContent='offline'}}
+async function refreshMarket(){try{const r=await api('/api/market');marketData=r.data||{};const btc=marketData.bitcoin||{},xmr=marketData.monero||{};$('mBtc').textContent=btc.brl?fmtBRL(btc.brl):'—';$('mXmr').textContent=xmr.brl?fmtBRL(xmr.brl):'—';$('mBtcCh').textContent=`24h ${fmtNum(btc.brl_24h_change,2)}%`;$('mXmrCh').textContent=`24h ${fmtNum(xmr.brl_24h_change,2)}%`}catch(e){toast('Mercado: '+e.message,true)}}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function workerRows(target,workers){if(!workers.length){$(target).innerHTML='<tr><td colspan="7" class="muted">Nenhum worker registrado.</td></tr>';return}$(target).innerHTML=workers.map(w=>`<tr><td><b>${esc(w.name)}</b><div class="muted">${esc(w.id)}</div></td>${target==='workersTable'?`<td>${esc(w.host||'—')}</td><td>${fmtHash(w.hashrate)}</td><td>${fmtHash(w.hashrate60s)}</td><td>${fmtHash(w.hashrate15m)}</td><td>${fmtNum(w.accepted,0)} / ${fmtNum(w.rejected,0)}</td><td><span class="chip"><span class="dot ${w.online?'ok':''}"></span>${w.online?'online':'offline'}</span></td>`:`<td>${esc(w.coin)}</td><td>${fmtHash(w.hashrate)}</td><td>${fmtNum(w.accepted,0)}</td><td>${esc(w.pool||'—')}</td><td><span class="chip"><span class="dot ${w.online?'ok':''}"></span>${w.online?'online':'offline'}</span></td>`}</tr>`).join('')}
+async function refreshWorkers(){try{workersData=await api('/api/workers');$('mWorkers').textContent=workersData.online;$('mWorkersSub').textContent=`${workersData.total} registrados`;$('mHash').textContent=fmtHash(workersData.totalHashrate);workerRows('dashWorkers',(workersData.workers||[]).filter(w=>w.online).slice(0,8));workerRows('workersTable',workersData.workers||[])}catch(e){toast('Workers: '+e.message,true)}}
+async function refreshExchangeStatus(){const ex=$('eExchange').value;try{const s=await api('/api/exchange/status?exchange='+encodeURIComponent(ex));$('exchangeMode').textContent=s.liveTrading?'TRADING REAL ATIVO':(s.credentialsConfigured?'credenciais OK / trading off':'somente público');$('exchangeMode').className='chip '+(s.liveTrading?'red':s.credentialsConfigured?'green':'')}catch(e){$('exchangeMode').textContent='indisponível'}}
+async function refreshAll(){await Promise.allSettled([refreshHealth(),refreshMarket(),refreshWorkers(),refreshExchangeStatus()])}
+function useLiveXmrPrice(){if(marketData.monero?.brl){$('pPrice').value=marketData.monero.brl;toast('Preço XMR/BRL aplicado')}}function useLiveBtcPrice(){if(marketData.bitcoin?.brl){$('pPrice').value=marketData.bitcoin.brl;toast('Preço BTC/BRL aplicado')}}
+async function calcProfit(){try{const body={algorithm:$('pAlgo').value,hashrate:+$('pHash').value,difficulty:+$('pDiff').value,blockReward:+$('pReward').value,price:+$('pPrice').value,poolFee:+$('pFee').value,uptime:+$('pUptime').value,powerWatts:+$('pPower').value,electricityCostKwh:+$('pElectric').value,cloudCostPerDay:+$('pCloud').value};const r=await api('/api/profitability',{method:'POST',body:JSON.stringify(body)}),x=r.result;$('rRevenue').textContent=fmtBRL(x.revenue);$('rCost').textContent=fmtBRL(x.totalCost);$('rNet').textContent=fmtBRL(x.net);$('rMargin').textContent=fmtNum(x.marginPct,1)+'%';$('rNet').className='value '+(x.net>=0?'green':'red');$('rMargin').className='value '+(x.marginPct>=0?'green':'red');$('profitNotice').className='notice '+(x.net>=0?'safe':'bad');$('profitNotice').innerHTML=x.net>=0?`Cenário positivo no modelo: <b>${fmtBRL(x.net)}/dia</b>. Break-even do ativo: ${x.breakEvenAssetPrice?fmtBRL(x.breakEvenAssetPrice):'—'}.`:`Cenário negativo: <b>${fmtBRL(x.net)}/dia</b>. Não aumente hashrate antes de revisar custo, dificuldade e preço.`;drawProfit(x.net)}catch(e){toast(e.message,true)}}
+function drawProfit(daily){const c=$('profitChart'),ctx=c.getContext('2d'),dpr=devicePixelRatio||1,r=c.getBoundingClientRect();c.width=r.width*dpr;c.height=r.height*dpr;ctx.scale(dpr,dpr);const w=r.width,h=r.height,p=16;ctx.clearRect(0,0,w,h);const vals=Array.from({length:30},(_,i)=>daily*(i+1));const min=Math.min(0,...vals),max=Math.max(1,...vals);const sx=i=>p+(w-2*p)*i/29,sy=v=>h-p-(h-2*p)*(v-min)/(max-min||1);ctx.strokeStyle='#2a342b';ctx.lineWidth=1;for(let i=0;i<4;i++){let y=p+(h-2*p)*i/3;ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(w-p,y);ctx.stroke()}ctx.strokeStyle=daily>=0?'#71f0b3':'#ff6b75';ctx.lineWidth=2.2;ctx.beginPath();vals.forEach((v,i)=>i?ctx.lineTo(sx(i),sy(v)):ctx.moveTo(sx(i),sy(v)));ctx.stroke()}
+async function generateXmrig(){try{const backend=$('xBackend').value;const body={wallet:$('xWallet').value,pool:$('xPool').value,workerName:$('xWorker').value,coin:'monero',opencl:backend==='opencl',cuda:backend==='cuda'};const r=await api('/api/miner/config',{method:'POST',body:JSON.stringify(body)});$('xmrigOut').textContent=JSON.stringify(r.config,null,2)}catch(e){toast(e.message,true)}}async function copyConfig(){try{await navigator.clipboard.writeText($('xmrigOut').textContent);toast('Config copiado')}catch{toast('Não foi possível copiar',true)}}
+async function quoteExchange(){try{const body={exchange:$('eExchange').value,symbol:$('eSymbol').value,side:$('eSide').value,amount:+$('eAmount').value};const r=await api('/api/exchange/quote',{method:'POST',body:JSON.stringify(body)}),q=r.quote;$('quoteBox').className='notice safe';$('quoteBox').innerHTML=`${q.side==='sell'?'Venda':'Compra'} de <b>${fmtNum(q.amount,8)} ${esc(q.symbol.split('/')[0])}</b> @ ${fmtNum(q.price,8)} ≈ <b>${fmtNum(q.estimatedQuote,8)} ${esc(q.symbol.split('/')[1])}</b> em ${esc(q.exchange)}.`}catch(e){$('quoteBox').className='notice bad';$('quoteBox').textContent=e.message}}
+async function loadBalance(){try{const r=await api('/api/exchange/balance',{method:'POST',body:JSON.stringify({exchange:$('eExchange').value})});$('balanceOut').textContent=JSON.stringify(r,null,2)}catch(e){$('balanceOut').textContent='Erro: '+e.message}}
+async function liveConvert(){if(!confirm('Esta ação pode criar uma ORDEM REAL na exchange. Continuar?'))return;try{const body={exchange:$('eExchange').value,symbol:$('eSymbol').value,side:$('eSide').value,amount:+$('eAmount').value,confirmation:$('eConfirm').value};const r=await api('/api/exchange/convert',{method:'POST',body:JSON.stringify(body)});toast('Ordem enviada: '+(r.order?.id||'sem id'));$('balanceOut').textContent=JSON.stringify(r,null,2)}catch(e){toast(e.message,true)}}
+$('eExchange').addEventListener('change',refreshExchangeStatus);refreshAll();setInterval(refreshWorkers,15000);setInterval(refreshMarket,60000);calcProfit();
 </script>
 </body>
 </html>
-"""
-
-path = Path("/mnt/data/nimbus_hash_router.html")
-path.write_text(html, encoding="utf-8")
-print(path)
