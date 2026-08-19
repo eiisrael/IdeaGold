@@ -10,6 +10,7 @@
     "worker": "node worker-agent.js",
     "check": "node scripts/check.js",
     "test": "node tests/run.js",
+    "test:smoke": "node tests/smoke-server.js",
     "legacy:test": "node test/goldbrain.test.js"
   },
   "engines": {
