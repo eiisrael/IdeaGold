@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>IdeaGold 5 — Supreme Mind</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">IG</div><div><strong>IdeaGold</strong><small>Supreme Mind 5.0</small></div></div>
+    <nav id="nav">
+      <button data-page="dashboard" class="active">◈ <span>Dashboard</span></button>
+      <button data-page="mining">⛏ <span>Mineração</span></button>
+      <button data-page="mind">✦ <span>Supreme Mind</span></button>
+      <button data-page="pools">⌁ <span>Pools</span></button>
+      <button data-page="benchmark">⌁ <span>Benchmark</span></button>
+      <button data-page="profiles">▣ <span>Perfis</span></button>
+      <button data-page="profit">₿ <span>Rentabilidade</span></button>
+      <button data-page="history">⌁ <span>Histórico</span></button>
+      <button data-page="hardware">▦ <span>Hardware</span></button>
+      <button data-page="logs">≡ <span>Logs</span></button>
+      <button data-page="settings">⚙ <span>Configurações</span></button>
+    </nav>
+    <div class="sidebar-foot"><span id="connDot" class="dot"></span><span id="connText">Conectando…</span></div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div><h1 id="pageTitle">Dashboard</h1><p id="pageSub">Dados reais primeiro. Estimativas sempre identificadas.</p></div>
+      <div class="top-actions"><button id="uiMode" class="ghost">Modo básico</button><span class="version" id="version">v5</span></div>
+    </header>
+
+    <section class="page active" data-view="dashboard">
+      <div class="hero card">
+        <div><span class="eyebrow">ESTADO REAL</span><h2 id="heroState">AGUARDANDO</h2><p id="heroExplain">Verificando processo, XMRig e pool.</p></div>
+        <div class="orb" id="orb"><span id="orbLabel">…</span></div>
+      </div>
+      <div class="controlbar card">
+        <button id="startBtn" class="primary">▶ INICIAR MINERAÇÃO</button>
+        <button id="pauseBtn" class="secondary">Ⅱ PAUSAR</button>
+        <button id="resumeBtn" class="secondary">▶ RETOMAR</button>
+        <button id="stopBtn" class="danger">■ PARAR</button>
+        <button id="benchmarkQuick" class="ghost">BENCHMARK</button>
+        <button id="mindQuick" class="ghost">SUPREME MIND</button>
+      </div>
+      <div class="metrics six">
+        <article class="metric card"><small>HASH LOCAL 10s</small><strong id="hash10">—</strong><span id="hashSource" class="source">aguardando</span></article>
+        <article class="metric card"><small>HASH 60s / 15m</small><strong id="hashLong">—</strong><span class="muted">estabilidade local</span></article>
+        <article class="metric card"><small>HASH EFETIVO POOL</small><strong id="poolHash">—</strong><span id="poolSource" class="source">aguardando</span></article>
+        <article class="metric card"><small>SHARES SESSÃO</small><strong id="shares">—</strong><span id="shareReject" class="muted">aceitas / rejeitadas</span></article>
+        <article class="metric card"><small>GANHO REAL SESSÃO</small><strong id="realGain">—</strong><span class="source real">pool Δ saldo</span></article>
+        <article class="metric card"><small>LÍQUIDO / DIA</small><strong id="netDay">—</strong><span id="profitSource" class="source">aguardando</span></article>
+      </div>
+      <div class="grid two">
+        <article class="card eta-card">
+          <div class="card-head"><div><span class="eyebrow">PRÓXIMO INCREMENTO ESTIMADO</span><h3 id="etaAmount">Aguardando dados</h3></div><span id="etaConfidence" class="pill">0%</span></div>
+          <div id="etaTime" class="eta-time">—</div>
+          <p id="etaRange" class="muted">A ETA só aparece quando existe taxa calculável.</p>
+          <div class="mini-grid"><div><small>Falta</small><b id="etaRemaining">—</b></div><div><small>Ritmo</small><b id="rateHour">—</b></div><div><small>Próxima share</small><b id="shareEta">—</b></div></div>
+          <p class="note">É uma previsão estatística de produção. O crédito PPLNS pode aparecer em blocos e não é um cronômetro de pagamento.</p>
+        </article>
+        <article class="card">
+          <div class="card-head"><h3>Qualidade dos dados</h3><span class="pill" id="qualityOverall">—</span></div>
+          <div id="qualityList" class="quality-list"></div>
+        </article>
+      </div>
+      <div class="grid two">
+        <article class="card"><div class="card-head"><h3>Última hora</h3><span class="muted">hash local</span></div><canvas id="miniChart" width="800" height="250"></canvas></article>
+        <article class="card"><div class="card-head"><h3>Supreme Mind</h3><span id="mindStatusPill" class="pill">desligado</span></div><div id="mindSummary" class="mind-summary"></div><button data-goto="mind" class="ghost full">ABRIR SUPREME MIND</button></article>
+      </div>
+    </section>
+
+    <section class="page" data-view="mining">
+      <div class="grid two">
+        <article class="card"><div class="card-head"><h3>Controle do minerador</h3><span id="minerStatePill" class="pill">—</span></div><div class="control-stack"><button id="startBtn2" class="primary">▶ Iniciar</button><button id="pauseBtn2" class="secondary">Ⅱ Pausar</button><button id="resumeBtn2" class="secondary">▶ Retomar</button><button id="restartBtn" class="ghost">↻ Reiniciar</button><button id="stopBtn2" class="danger">■ Parar</button></div></article>
+        <article class="card"><h3>Telemetria XMRig</h3><dl class="details" id="minerDetails"></dl></article>
+      </div>
+      <article class="card"><div class="card-head"><h3>Configuração ativa</h3><span class="source real">gerada localmente</span></div><div id="activeConfig" class="kv-grid"></div><p class="note">Configurações geradas têm backup. O IdeaGold não altera tensão, BIOS ou clocks automaticamente.</p><label class="ghost advanced-only" style="display:inline-block;padding:8px 10px;cursor:pointer">Importar config XMRig JSON<input id="xmrigConfigImport" type="file" accept="application/json" style="display:none"></label></article>
+    </section>
+
+    <section class="page" data-view="mind">
+      <div class="hero card compact"><div><span class="eyebrow">SUPREME MIND</span><h2 id="mindHero">DESLIGADO</h2><p>Controlador estatístico auditável: regras de segurança + detecção robusta + otimização Bayesiana de configurações seguras.</p></div><label class="switch"><input id="mindToggle" type="checkbox"><span></span></label></div>
+      <div class="grid two">
+        <article class="card"><h3>Objetivo</h3><div class="mode-buttons" id="modeButtons"><button data-mode="performance">Performance</button><button data-mode="efficiency">Eficiência</button><button data-mode="profit">Lucro</button><button data-mode="balanced">Equilibrado</button><button data-mode="eco">Silencioso/Eco</button><button data-mode="manual">Manual</button></div></article>
+        <article class="card"><h3>Classificação real</h3><div id="aiClassification" class="quality-list"></div></article>
+      </div>
+      <div class="grid three">
+        <article class="metric card"><small>CONFIANÇA ATUAL</small><strong id="mindConfidence">—</strong></article>
+        <article class="metric card"><small>EXPERIMENTOS SALVOS</small><strong id="mindExperiments">0</strong></article>
+        <article class="metric card"><small>MELHOR PERFIL SEGURO</small><strong id="mindBest">—</strong></article>
+      </div>
+      <article class="card"><div class="card-head"><h3>Últimas decisões</h3><span class="muted">explicáveis e persistidas</span></div><div id="decisionLog" class="timeline"></div></article>
+      <article class="card advanced-only"><h3>Detecção de anomalias</h3><div id="anomalies" class="quality-list"></div></article>
+    </section>
+
+    <section class="page" data-view="pools">
+      <div class="grid two"><article class="card"><h3>Pool ativo</h3><div id="poolCard"></div></article><article class="card"><h3>Score de qualidade</h3><div id="poolScore"></div></article></div>
+      <article class="card"><h3>Seleção de pool</h3><div class="form-row"><label>Adapter<select id="poolAdapter"><option value="moneroocean">MoneroOcean</option><option value="p2pool">P2Pool local (opcional)</option></select></label><label>Host<input id="poolHost"></label><label>Porta<input id="poolPort" type="number"></label><button id="savePool" class="primary">Salvar pool</button></div><p id="p2poolNote" class="note">P2Pool só é usado quando existe nó local configurado. O IdeaGold não inventa saldo ou shares de um P2Pool ausente.</p></article>
+    </section>
+
+    <section class="page" data-view="benchmark">
+      <div class="hero card compact"><div><span class="eyebrow">AUTOTUNE SEGURO</span><h2 id="benchState">PARADO</h2><p id="benchMessage">Compara configurações no seu hardware real, com aquecimento, amostragem, estabilidade e rollback.</p></div><div class="row"><button id="startBenchmark" class="primary">INICIAR AUTOTUNE</button><button id="stopBenchmark" class="danger">PARAR E RESTAURAR</button></div></div>
+      <article class="card"><div class="progress"><div id="benchProgress"></div></div><div id="benchProgressText" class="muted">Nenhum teste em andamento.</div></article>
+      <article class="card"><div class="card-head"><h3>Resultados medidos</h3><span class="muted">persistidos no SQLite</span></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Objetivo</th><th>Threads</th><th>Hash mediano</th><th>CV</th><th>W</th><th>H/W</th><th>Confiança</th><th>Validade</th></tr></thead><tbody id="benchRows"></tbody></table></div></article>
+    </section>
+
+    <section class="page" data-view="profiles">
+      <div class="card"><div class="card-head"><div><h3>Perfis por hardware</h3><p class="muted">Vinculados ao fingerprint local para não reutilizar tuning de outro PC.</p></div><div class="row"><button id="saveCurrentProfile" class="ghost">Salvar configuração atual</button><label class="ghost" style="padding:8px 10px;cursor:pointer">Importar perfil<input id="profileImport" type="file" accept="application/json" style="display:none"></label></div></div><div id="profilesList" class="profile-list"></div></div>
+    </section>
+
+    <section class="page" data-view="profit">
+      <div class="metrics four"><article class="metric card"><small>XMR / HORA</small><strong id="profitRate">—</strong></article><article class="metric card"><small>CUSTO / DIA</small><strong id="costDay">—</strong></article><article class="metric card"><small>BREAK-EVEN ENERGIA</small><strong id="breakTariff">—</strong></article><article class="metric card"><small>BREAK-EVEN XMR</small><strong id="breakXmr">—</strong></article></div>
+      <article class="card"><h3>Estimativa de rendimento</h3><div class="table-wrap"><table><thead><tr><th>Tempo</th><th>XMR estimado</th><th>Bruto</th><th>Energia</th><th>Líquido</th></tr></thead><tbody id="profitRows"></tbody></table></div><p id="profitNote" class="note"></p></article>
+      <article class="card advanced-only"><h3>Eficiência e cenários</h3><div id="efficiencyGrid" class="kv-grid"></div><div class="table-wrap"><table><thead><tr><th>Preço</th><th>Dificuldade</th><th>XMR/dia</th><th>Líquido/dia</th></tr></thead><tbody id="scenarioRows"></tbody></table></div></article>
+    </section>
+
+    <section class="page" data-view="history">
+      <article class="card"><div class="card-head"><h3>Histórico real local</h3><select id="historyRange"><option>15m</option><option selected>1h</option><option>6h</option><option>24h</option><option>7d</option><option>30d</option></select></div><canvas id="historyChart" width="1200" height="420"></canvas><div class="chart-legend"><span>Hash</span><span>Potência</span><span>Lucro/dia</span></div></article>
+      <article class="card"><h3>Sessões</h3><div class="table-wrap"><table><thead><tr><th>Início</th><th>Duração</th><th>Hash médio</th><th>XMR observado</th><th>kWh</th><th>Custo</th><th>Resultado</th></tr></thead><tbody id="sessionsRows"></tbody></table></div></article>
+    </section>
+
+    <section class="page" data-view="hardware">
+      <div class="grid two"><article class="card"><h3>Fingerprint não invasivo</h3><dl id="hardwareDetails" class="details"></dl></article><article class="card"><h3>Saúde</h3><div id="healthList" class="quality-list"></div></article></div>
+      <article class="card"><h3>Otimizações RandomX</h3><div id="randomxHealth" class="quality-list"></div><p class="note">Huge Pages e MSR são lidos do próprio XMRig. Se não houver fonte, o painel mostra indisponível em vez de assumir sucesso.</p></article>
+    </section>
+
+    <section class="page" data-view="logs">
+      <article class="card"><div class="card-head"><h3>Logs</h3><div class="row"><select id="logType"><option value="all">Sistema</option><option value="mining">Mineração</option><option value="optimization">Otimização</option><option value="error">Erros</option><option value="xmrig">XMRig</option></select><button id="refreshLogs" class="ghost">Atualizar</button></div></div><pre id="logsBox">Aguardando…</pre></article>
+    </section>
+
+    <section class="page" data-view="settings">
+      <article class="card"><h3>Configuração simples</h3><div class="form-grid"><label>Carteira pública XMR<input id="wallet" autocomplete="off" placeholder="4... ou 8..."></label><label>Energia R$/kWh<input id="tariff" type="number" step="0.01"></label><label>Watts medidos minerando (0 = estimar)<input id="measuredWatts" type="number" step="1"></label><label>Watts ocioso (opcional)<input id="idleWatts" type="number" step="1"></label><label>Custo elétrico<select id="costMode"><option value="full">PC inteiro</option><option value="incremental">Somente consumo incremental</option></select></label><label>Threads CPU<input id="threads" type="number" min="1"></label><label>Temperatura aviso °C<input id="warningTemp" type="number"></label><label>Temperatura crítica °C<input id="criticalTemp" type="number"></label></div><button id="saveSettings" class="primary">SALVAR CONFIGURAÇÕES</button></article>
+      <article class="card advanced-only"><h3>Supreme Mind avançado</h3><div class="form-grid"><label>Melhoria mínima para trocar (%)<input id="minImprovement" type="number"></label><label>Aquecimento por teste (s)<input id="warmupSec" type="number"></label><label>Amostragem por teste (s)<input id="sampleSec" type="number"></label><label><span>Aplicação automática</span><select id="autoApply"><option value="false">Desligada — recomendar</option><option value="true">Ligada — somente perfil seguro</option></select></label></div><p class="note">A aplicação automática nunca altera tensão, clock, BIOS, drivers ou executa código remoto. Ela só escolhe perfis locais já medidos e marcados como seguros.</p></article>
+    </section>
+  </main>
+</div>
+<div id="toast"></div>
+<div id="onboarding" class="modal hidden"><div class="modal-card"><span class="eyebrow">PRIMEIRO USO</span><h2>Configure sua carteira XMR</h2><p>Cole apenas o endereço público para receber. Nunca use seed, senha ou chave privada aqui.</p><input id="onboardWallet" placeholder="Seu endereço público XMR"><button id="onboardSave" class="primary full">SALVAR E CONTINUAR</button><p class="note">Depois, um clique em “Iniciar mineração” instala/verifica o XMRig oficial e começa.</p></div></div>
+<script src="/app.js" defer></script>
+</body>
+</html>
