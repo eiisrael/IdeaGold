@@ -1,8 +1,8 @@
 {
   "name": "ideagold-v2",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
-  "description": "GoldMesh: painel de mineração distribuída, telemetria XMRig, rentabilidade e conversão via exchanges.",
+  "description": "GoldMesh Profit Guard: mineração autorizada, telemetria XMRig, perfil i5-4670K/RX460, energia, rentabilidade e conversão via exchanges.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
