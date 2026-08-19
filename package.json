@@ -9,7 +9,7 @@
     "dev": "node --watch backend/server.js",
     "worker": "node worker-agent.js",
     "check": "node scripts/check.js",
-    "test": "node tests/run.js && node tests/workers.js && node tests/runtime-safety.js",
+    "test": "node tests/run.js && node tests/workers.js && node tests/runtime-safety.js && node tests/regressions-v511.js",
     "test:smoke": "node tests/smoke-server.js"
   },
   "engines": {
