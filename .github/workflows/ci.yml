@@ -1,0 +1,19 @@
+name: IdeaGold CI
+on:
+  push:
+    branches:
+      - agent/ideagold-v5-mining-intelligence
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
