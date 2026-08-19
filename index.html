@@ -10,7 +10,7 @@ button,input{font:inherit}.app{max-width:980px;margin:auto;padding:22px}.top{dis
 .card{background:linear-gradient(180deg,#151914,#0e110d);border:1px solid var(--line);border-radius:22px;overflow:hidden}.pad{padding:20px}.hero{text-align:center;padding:28px 20px 20px}.hero h1{font-size:34px;margin:4px 0 8px}.hero p{color:var(--muted);font-size:12px;line-height:1.6;max-width:650px;margin:0 auto}
 .machine{height:230px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 50%,#3a2b1555,transparent 52%)}canvas{position:absolute;inset:0;width:100%;height:100%}.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:118px;height:118px;border-radius:40px;background:#17160f;border:1px solid #685526;display:grid;place-items:center;box-shadow:0 0 70px #f1ca5d18;z-index:2}.core strong{font-size:30px;color:var(--gold)}.core span{display:block;font-size:9px;color:var(--muted);margin-top:2px}
 .controls{padding:0 20px 22px}.wallet{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:12px}.wallet input{width:100%;background:#080a08;color:var(--text);border:1px solid #30382c;border-radius:13px;padding:13px 14px;outline:none}.btn{border:0;border-radius:13px;padding:13px 16px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#ffe18b,var(--gold));color:#171206}.btn.alt{background:#151a14;color:var(--text);border:1px solid var(--line)}.btn.stop{background:#291216;color:#ffd1d4;border:1px solid #662b31}.big{width:100%;font-size:18px;padding:18px;border-radius:16px;box-shadow:0 14px 40px #f1ca5d14}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.metric{background:#0a0d0a;border:1px solid var(--line);border-radius:15px;padding:14px;text-align:center}.metric small{color:var(--muted);font-size:9px;text-transform:uppercase}.metric b{display:block;font-size:20px;margin-top:6px}.green{color:var(--green)}.gold{color:var(--gold)}.red{color:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.metric{background:#0a0d0a;border:1px solid var(--line);border-radius:15px;padding:14px;text-align:center}.metric small{color:var(--muted);font-size:9px;text-transform:uppercase}.metric b{display:block;font-size:20px;margin-top:6px}.green{color:var(--green)}.gold{color:var(--gold)}.red{color:var(--red)}
 .notice{margin-top:12px;padding:12px 14px;border-radius:13px;background:#14140d;border:1px solid #403820;color:#d8cc9e;font-size:10px;line-height:1.55}.notice.ok{border-color:#214c35;background:#0d1711;color:#abe8c7}.notice.bad{border-color:#55262c;background:#1c1012;color:#ffcbd0}
 .bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.section h3{font-size:13px;margin:0 0 10px}.steps{display:grid;gap:8px}.step{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:12px;background:#0a0d0a}.num{width:24px;height:24px;border-radius:8px;background:#272111;color:var(--gold);display:grid;place-items:center;font-size:10px;font-weight:900;flex:none}.step b{font-size:10px}.step span{display:block;color:var(--muted);font-size:9px;line-height:1.4;margin-top:2px}.advanced{margin-top:12px}.advanced summary{cursor:pointer;color:var(--muted);font-size:10px}.form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.field label{display:block;color:var(--muted);font-size:9px;margin-bottom:5px}.field input{width:100%;background:#080a08;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px}
 .footer{text-align:center;color:#626c62;font-size:9px;padding:18px}.toast{position:fixed;right:16px;bottom:16px;max-width:360px;background:#161b15;border:1px solid #3b453a;padding:12px 14px;border-radius:13px;font-size:10px;display:none}.toast.show{display:block}.toast.err{border-color:#6c3036;color:#ffd0d3}
@@ -28,10 +28,13 @@ button,input{font:inherit}.app{max-width:980px;margin:auto;padding:22px}.top{dis
     <div class="grid">
       <div class="metric"><small>Velocidade</small><b class="gold" id="hash">0 H/s</b></div>
       <div class="metric"><small>Shares aceitas</small><b class="green" id="shares">0</b></div>
+      <div class="metric"><small>Saldo no pool</small><b class="green" id="poolDue">0 XMR</b></div>
+      <div class="metric"><small>Total já pago</small><b id="poolPaid">0 XMR</b></div>
       <div class="metric"><small>XMR agora</small><b id="price">—</b></div>
       <div class="metric"><small>Estado</small><b id="state">Parado</b></div>
     </div>
     <div class="notice" id="msg">Primeiro salve sua carteira. O IdeaGold nunca pede seed phrase, chave privada ou senha da carteira.</div>
+    <button class="btn alt" id="poolBtn" style="width:100%;margin-top:8px" onclick="openPool()">VER MEU SALDO NO POOL</button>
   </div>
 </div>
 
@@ -63,15 +66,16 @@ async function refresh(){try{S=await api('/api/simple/status');$('server').textC
 function render(){
   if(!S)return; $('wallet').value=S.walletFull||'';$('electricity').value=S.electricity;$('threads').value=S.threads;
   const run=S.miner.running,inst=S.miner.installed;
-  $('hash').textContent=fmtHash(S.miner.hashrate);$('shares').textContent=S.miner.accepted||0;$('price').textContent=S.market.xmrBRL?brl(S.market.xmrBRL):'—';
+  $('hash').textContent=fmtHash(S.miner.hashrate);$('shares').textContent=S.miner.accepted||0;$('poolDue').textContent=(Number(S.pool?.dueXmr||0)).toFixed(6)+' XMR';$('poolPaid').textContent=(Number(S.pool?.paidXmr||0)).toFixed(6)+' XMR';$('price').textContent=S.market.xmrBRL?brl(S.market.xmrBRL):'—';
   $('state').textContent=run?'Minerando':inst?'Pronto':'Não instalado';$('state').className=run?'green':inst?'gold':'';
   $('coreText').textContent=run?'ON':'OFF';$('coreSub').textContent=run?'mineração ativa':'minerador parado';$('headline').textContent=run?'Você está minerando.':'Pronto para começar.';
   $('verify').textContent=inst?(S.miner.verified?'XMRig '+S.miner.version+' • SHA-256 verificado.':'XMRig instalado.'):'Será baixado do GitHub oficial e verificado antes de executar.';
-  const loss=Math.round((S.risk?.lossProbability||0)*100);$('risk').textContent=`Simulação de ${S.risk?.simulations||0} cenários: risco estimado de prejuízo ${loss}%. Isso orienta decisão; não aumenta hashes magicamente.`;
+  if(S.risk){const loss=Math.round(S.risk.lossProbability*100);$('risk').textContent=`Simulação de ${S.risk.simulations} cenários com dificuldade e preço variáveis: risco estimado de prejuízo ${loss}%.`;}else{$('risk').textContent='Aguardando hashrate real e dados da rede para simular rentabilidade.';}
   const b=$('mainBtn'); b.textContent=busy?'PROCESSANDO…':run?'PARAR MINERAÇÃO':inst?'COMEÇAR A MINERAR':'INSTALAR E COMEÇAR';b.className='btn big'+(run?' stop':'');b.disabled=busy;
   $('msg').className='notice '+(run?'ok':'');$('msg').textContent=run?`Minerando para ${S.wallet}. Pool: ${S.miner.pool}. ${fmtHash(S.miner.hashrate)}.`:S.configured?'Sua carteira está salva. Clique no botão grande para começar.':'Primeiro salve sua carteira. Nunca cole seed phrase ou chave privada.';
   animate(run);
 }
+function openPool(){if(!S?.walletFull){toast('Salve sua carteira primeiro.',true);return}window.open('https://moneroocean.stream/?addr='+encodeURIComponent(S.walletFull),'_blank','noopener')}
 async function saveWallet(){try{await api('/api/simple/wallet',{method:'POST',body:JSON.stringify({wallet:$('wallet').value,electricity:Number($('electricity').value),threads:Number($('threads').value)})});toast('Carteira salva com segurança.');await refresh()}catch(e){toast(e.message,true)}}
 async function saveSettings(){try{await api('/api/simple/settings',{method:'POST',body:JSON.stringify({electricity:Number($('electricity').value),threads:Number($('threads').value)})});toast('Ajustes salvos.');await refresh()}catch(e){toast(e.message,true)}}
 async function mainAction(){if(busy)return;try{busy=true;render();if(!S.configured){toast('Primeiro cole e salve sua carteira XMR.',true);return}if(S.miner.running)await api('/api/simple/stop',{method:'POST',body:'{}'});else{if(!S.miner.installed){$('msg').textContent='Baixando XMRig oficial e verificando SHA-256…';await api('/api/simple/install',{method:'POST',body:'{}'})}await api('/api/simple/start',{method:'POST',body:'{}'})}await refresh()}catch(e){toast(e.message,true)}finally{busy=false;await refresh()}}
