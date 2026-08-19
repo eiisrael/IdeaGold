@@ -1,7 +1,6 @@
 'use strict';
 
 const EventEmitter=require('events');
-const crypto=require('crypto');
 const {GaussianProcessOptimizer,generateSafeCandidates}=require('./bayesian-optimizer');
 const {objectiveValue,explain}=require('./scoring');
 
@@ -38,7 +37,7 @@ class SupremeMind extends EventEmitter{
     if(this.state.objective==='manual')throw new Error('Modo Manual não altera configuração automaticamente.');
     if(this.state.status==='learning')throw new Error('Supreme Mind já está em autotuning.');
     const ctx=this.getContext();if(!ctx.settings.wallet)throw new Error('Configure a carteira antes do autotuning.');
-    this.cancelled=false;this.state.status='learning';this.state.startedAt=Date.now();this.state.experiments=0;this.emit('state',this.snapshot());
+    this.cancelled=false;this.state.status='learning';this.state.startedAt=Date.now();this.state.experiments=0;this.state.error=null;this.emit('state',this.snapshot());
     const original={...(ctx.profile||{})};let baseline=null,best=null;
     try{
       const warmupSec=Math.max(10,Number(options.warmupSec||ctx.settings.benchmarkWarmupSec||20));
@@ -52,7 +51,7 @@ class SupremeMind extends EventEmitter{
       const observations=[...historical,{config:original,value:objectiveValue(this.state.objective,baseline)}];
       const gp=new GaussianProcessOptimizer({threads:{min:1,max:ctx.hardware.logicalThreads}});
       for(let i=0;i<maxExperiments&&!this.cancelled;i++){
-        let suggestion=gp.suggest(observations,candidates);
+        const suggestion=gp.suggest(observations,candidates);
         const config=suggestion?.config||suggestion;
         if(!config)break;
         this.state.current={config,index:i+1,total:maxExperiments,prediction:suggestion?.prediction||null,expectedImprovement:suggestion?.ei||null};this.emit('state',this.snapshot());
@@ -60,23 +59,25 @@ class SupremeMind extends EventEmitter{
         try{result=await this.benchmark.runCandidate(config,{objective:this.state.objective,warmupSec,sampleSec,label:`candidate-${i+1}`,baseline});}
         catch(error){this.logDecision({action:'REJEITAR CANDIDATO',reason:error.message,before:best?.config,after:config,confidence:1,result:'ROLLBACK'});continue;}
         this.state.experiments++;observations.push({config,value:objectiveValue(this.state.objective,result)});
-        const before=objectiveValue(this.state.objective,best),after=objectiveValue(this.state.objective,result);
-        const requiredGain=Math.abs(before)*0.005;
-        if(result.safe&&after>before+requiredGain){
-          const delta=explain(this.state.objective,best,result);best=result;
-          this.logDecision({action:'MANTER CONFIGURAÇÃO',reason:'Candidato superou o melhor perfil medido com margem mínima e passou nas regras de segurança.',before:best?.config,after:config,observed:delta,confidence:result.confidence,result:'WIN'});
+        const beforeScore=objectiveValue(this.state.objective,best),afterScore=objectiveValue(this.state.objective,result);
+        const requiredGain=Math.abs(beforeScore)*0.005;
+        if(result.safe&&afterScore>beforeScore+requiredGain){
+          const previousBest=best;
+          const delta=explain(this.state.objective,previousBest,result);
+          best=result;
+          this.logDecision({action:'MANTER CONFIGURAÇÃO',reason:'Candidato superou o melhor perfil medido com margem mínima e passou nas regras de segurança.',before:previousBest?.config,after:result.config||config,observed:delta,confidence:result.confidence,result:'WIN'});
         }else{
           this.logDecision({action:'REVERTER',reason:result.safe?'Ganho não superou a margem mínima para justificar mudança.':result.safetyReason,before:best?.config,after:config,observed:result.comparison,confidence:result.confidence,result:'LOSS'});
         }
       }
       if(!best)throw new Error('Nenhum benchmark válido foi concluído.');
-      const finalCtx=this.getContext();await this.controller.restart({...finalCtx,profile:best.config},'supreme-mind-winner');
+      const finalCtx=this.getContext();await this.controller.restart({...finalCtx,profile:best.config},this.cancelled?'supreme-mind-stop-best':'supreme-mind-winner');
       const built=this.configManager.build({wallet:finalCtx.settings.wallet,workerName:finalCtx.settings.workerName,pool:finalCtx.pool,profile:best.config});
       this.configManager.saveSafe(built.config,{source:'Supreme Mind',objective:this.state.objective,confidence:best.confidence});
       const profileId=`best-${this.state.objective}`;
       this.db.saveProfile({id:profileId,name:`Best ${this.state.objective}`,kind:'learned',objective:this.state.objective,config:best.config,score:objectiveValue(this.state.objective,best),confidence:best.confidence,safe:true});
-      this.state.best=best;this.state.confidence=best.confidence;this.state.status='ready';this.state.current=null;
-      this.logDecision({action:'APLICAR VENCEDOR',reason:'Fim do autotuning: melhor configuração medida foi aplicada e salva como Last Known Good.',before:original,after:best.config,confidence:best.confidence,result:'APPLIED'});
+      this.state.best=best;this.state.confidence=best.confidence;this.state.status=this.cancelled?'cancelled':'ready';this.state.current=null;
+      this.logDecision({action:this.cancelled?'PARAR NO MELHOR PERFIL':'APLICAR VENCEDOR',reason:this.cancelled?'Autotuning interrompido pelo usuário; melhor configuração estável medida foi restaurada.':'Fim do autotuning: melhor configuração medida foi aplicada e salva como Last Known Good.',before:original,after:best.config,confidence:best.confidence,result:this.cancelled?'SAFE':'APPLIED'});
       return this.snapshot();
     }catch(error){
       this.state.status=this.cancelled?'cancelled':'error';this.state.error=error.message;
