@@ -1,2 +1,2 @@
 'use strict';
-module.exports = require('./xmrig-controller-v51');
+module.exports = require('./xmrig-controller-v511');
