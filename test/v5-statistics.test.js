@@ -1,0 +1,2 @@
+'use strict';const assert=require('assert');const S=require('../optimizer/statistics');
+const r=S.robust([1000,1002,998,1001,5000]);assert(r.median>=998&&r.median<=1002);assert(r.cv<.02);const eta=S.shareEta(1000,60000,[55,61,59,62,58,60]);assert(eta.available&&eta.source==='observed-share-intervals');assert(eta.optimisticSec<eta.meanSec&&eta.conservativeSec>eta.meanSec);const c=S.confidenceScore({samples:40,durationSec:1800,cv:.03,accepted:10,rejected:0,sourceQuality:1});assert(c>.7);console.log('v5 statistics: OK');
