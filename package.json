@@ -1,15 +1,15 @@
 {
   "name": "ideagold",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "private": true,
-  "description": "IdeaGold Mining Intelligence Platform: mineração XMR/RandomX local-first, telemetria real, histórico SQLite, profitability e Supreme Mind autotuner.",
+  "description": "IdeaGold Mining Intelligence Platform: mineração XMR/RandomX local-first, telemetria resiliente, observabilidade, eficiência e Supreme Mind autotuner.",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node --watch backend/server.js",
     "worker": "node worker-agent.js",
     "check": "node scripts/check.js",
-    "test": "node tests/run.js && node tests/workers.js && node tests/runtime-safety.js",
+    "test": "node tests/run.js && node tests/workers.js && node tests/runtime-safety.js && node tests/regressions-v511.js",
     "test:smoke": "node tests/smoke-server.js"
   },
   "engines": {
