@@ -32,7 +32,7 @@ if %errorlevel% equ 0 (
 
 if not exist ".env" if exist ".env.example" copy /Y ".env.example" ".env" >nul
 
-echo Verificando IdeaGold 4.0...
+echo Verificando IdeaGold 4.1...
 call npm run check
 if %errorlevel% neq 0 (
   echo.
@@ -52,7 +52,7 @@ if %errorlevel% neq 0 (
 start "" "http://127.0.0.1:8080"
 echo.
 echo ==========================================
-echo   IdeaGold 4.0 - GoldBrain
+echo   IdeaGold 4.1 - GoldBrain Real
 echo   Feche esta janela para parar o painel.
 echo ==========================================
 echo.
