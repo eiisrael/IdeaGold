@@ -46,7 +46,7 @@ class TelemetryEngine extends EventEmitter{
     const rows=this.db.sessionTelemetry(this.session.id);const last=this.current||{};
     const started=this.session.startedAt,stopped=Date.now();const sec=Math.max(1,(stopped-started)/1000);
     const avgHash=S.mean(rows.map(r=>r.local_hashrate))||0,avgPower=S.mean(rows.map(r=>r.power_w))||0,avgPrice=S.mean(rows.map(r=>r.xmr_brl))||0;
-    const energy=avgPower/1000*sec/3600;const settings=this.getSettings();const energyCost=energy*Number(settings.electricityBrlKwh||0);
+    const energy=avgPower/1000*sec/3600;const settings=this.getSettings();const energyCost=energy*Number(settings.electricityBrlKWh||0);
     const finalPool=(Number(last.pool?.dueXmr)||0)+(Number(last.pool?.paidXmr)||0);const observed=Math.max(0,finalPool-this.session.baselinePoolXmr);const revenue=observed*avgPrice;
     this.db.finishSession(this.session.id,{stopped_at:stopped,final_pool_xmr:finalPool,xmr_observed:observed,avg_hashrate:avgHash,avg_power_w:avgPower,avg_price_brl:avgPrice,energy_kwh:energy,energy_cost_brl:energyCost,revenue_brl:revenue,profit_brl:revenue-energyCost,accepted:Number(last.session?.accepted||0),rejected:Number(last.session?.rejected||0),stop_reason:reason});
     this.session=null;this.poolSeries=[];
@@ -66,7 +66,7 @@ class TelemetryEngine extends EventEmitter{
     let xmrPerSec=null,rateSource='indisponível',rateConfidence=0;
     if(observed.rate&&observed.confidence>=.25){xmrPerSec=observed.rate;rateSource='crescimento observado do saldo do pool';rateConfidence=observed.confidence;}
     else if(theoretical){xmrPerSec=theoretical;rateSource=pool?.hashrate>0?'modelo de rede + hash efetivo do pool':'modelo de rede + hash local';rateConfidence=pool?.hashrate>0?.55:.35;}
-    const econ=xmrPerSec&&market?.brl?Profit.economics({xmrPerSec,priceBrl:market.brl,powerW:power.watts,electricityBrlKwh:settings.electricityBrlKwh,cloudCostBrlDay:0,hashrate:miner.hashrate60s,difficulty:network?.difficulty,reward:network?.reward,poolFeePct:settings.poolFeePct}):{available:false};
+    const econ=xmrPerSec&&market?.brl?Profit.economics({xmrPerSec,priceBrl:market.brl,powerW:power.watts,electricityBrlKWh:settings.electricityBrlKWh,cloudCostBrlDay:0,hashrate:miner.hashrate60s,difficulty:network?.difficulty,reward:network?.reward,poolFeePct:settings.poolFeePct}):{available:false};
     const sessionAccepted=this.session?Math.max(0,Number(pool?.accepted||miner.accepted||0)-this.session.baselineAccepted):Number(miner.accepted||0);
     const sessionRejected=this.session?Math.max(0,Number(pool?.rejected||miner.rejected||0)-this.session.baselineRejected):Number(miner.rejected||0);
     const poolFresh=pool?.lastShareTs?Date.now()-Number(pool.lastShareTs)<15*60_000:false;
