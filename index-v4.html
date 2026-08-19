@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080907">
+<title>IdeaGold 4.1 — GoldBrain Real</title>
+<style>
+:root{--bg:#060705;--panel:#11150f;--panel2:#090c09;--line:#293126;--gold:#f2cb61;--green:#68e0a0;--red:#ff737d;--blue:#76b8ff;--text:#f6f2e7;--muted:#98a298}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(900px 520px at 50% -12%,#4b381e66,transparent 62%),linear-gradient(#080907,#050605);color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif;min-height:100vh}
+button,input,select{font:inherit}.app{max-width:1080px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-weight:950;font-size:20px}.brand span{color:var(--gold)}.sub,.muted{color:var(--muted);font-size:10px}.pill{border:1px solid var(--line);padding:7px 10px;border-radius:999px;font-size:10px;color:var(--muted)}
+.card{background:linear-gradient(#151914,#0d100c);border:1px solid var(--line);border-radius:20px;margin-top:14px;overflow:hidden}.hero{text-align:center;padding:23px 18px 12px}.hero h1{margin:5px 0;font-size:32px}.hero p{margin:auto;max-width:760px;color:var(--muted);font-size:11px;line-height:1.55}
+.machine{height:180px;position:relative;background:radial-gradient(circle,#49391c55,transparent 55%)}canvas{position:absolute;width:100%;height:100%}.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:38px;background:#17160f;border:1px solid #665225;display:grid;place-items:center;text-align:center}.core b{font-size:27px;color:var(--gold)}
+.controls,.pad{padding:16px}.wallet{display:grid;grid-template-columns:1fr auto;gap:8px}input,select{width:100%;background:#080b08;color:var(--text);border:1px solid #30382c;border-radius:11px;padding:11px;outline:none}.btn{border:0;border-radius:12px;padding:12px 15px;font-weight:900;background:linear-gradient(135deg,#ffe38d,var(--gold));color:#171206;cursor:pointer}.btn:disabled{opacity:.55;cursor:wait}.btn.alt{background:#151a14;color:var(--text);border:1px solid var(--line)}.btn.stop{background:#2a1216;color:#ffd0d4;border:1px solid #652c33}.big{width:100%;font-size:17px;margin-top:9px;padding:17px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.metric{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:11px;text-align:center;min-height:64px}.metric small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase}.metric b{display:block;font-size:17px;margin-top:5px}.g{color:var(--gold)}.ok{color:var(--green)}.bad{color:var(--red)}.blue{color:var(--blue)}
+.realbox{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.realbox>div{border:1px solid #285037;background:#0b1710;border-radius:13px;padding:12px}.realbox small{font-size:8px;color:#96cfae;text-transform:uppercase}.realbox b{display:block;font-size:18px;margin-top:4px;color:var(--green)}
+.eta{text-align:center;margin-top:11px;padding:18px;border:1px solid #5a4820;border-radius:16px;background:#0a0d09}.eta .clock{font-size:36px;font-weight:950;margin:6px}.etaGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.mini{border:1px solid var(--line);border-radius:10px;padding:8px}.mini span{font-size:8px;color:var(--muted)}.mini b{display:block;font-size:12px;margin-top:3px}.notice{margin-top:9px;border:1px solid #403820;background:#14140d;border-radius:11px;padding:11px;font-size:10px;color:#d8cc9e;line-height:1.55}.notice.ok{border-color:#214d35;background:#0d1711;color:#abe8c7}.notice.bad{border-color:#5f2930;background:#1a0e10;color:#ffc9ce}.notice.info{border-color:#2e4662;background:#0d141b;color:#b9d8ff}
+.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}.title{display:flex;justify-content:space-between;align-items:center;gap:8px}.title h3{font-size:13px;margin:0}.title small{color:var(--muted);font-size:8px}table{width:100%;border-collapse:collapse;margin-top:9px}th,td{font-size:9px;padding:8px 6px;border-bottom:1px solid #222a21;text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--muted)}
+.list{display:grid;gap:7px;margin-top:10px}.item{display:flex;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:10px;padding:9px;background:#090c09}.item b{font-size:9px}.item span{font-size:8px;color:var(--muted);display:block;margin-top:2px}.tag{font-size:8px;border:1px solid var(--line);border-radius:999px;padding:5px 7px;height:max-content;white-space:nowrap}.advanced{margin-top:11px}.advanced summary{color:var(--muted);font-size:9px;cursor:pointer}.form{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.field label{display:block;font-size:8px;color:var(--muted);margin-bottom:3px}.footer{text-align:center;color:#626d63;font-size:8px;padding:18px;line-height:1.5}.toast{position:fixed;right:15px;bottom:15px;max-width:380px;background:#151a14;border:1px solid var(--line);padding:11px;border-radius:11px;font-size:10px;display:none;z-index:20}.toast.show{display:block}
+@media(max-width:800px){.metrics{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.form{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){.app{padding:10px}.wallet,.form,.etaGrid,.realbox{grid-template-columns:1fr}.hero h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><div class="brand">IdeaGold <span>4.1</span></div><div class="sub">GoldBrain Real • dados observados antes de estimar</div></div>
+    <div class="pill" id="server">conectando…</div>
+  </div>
+
+  <section class="card">
+    <div class="hero">
+      <div class="g sub">1 CLIQUE • ESTADO REAL • ETA DINÂMICA</div>
+      <h1 id="headline">Pronto para minerar.</h1>
+      <p>O IdeaGold diferencia processo aberto, calibração e mineração de verdade. Hashrate, shares, saldo e preço só aparecem quando a fonte correspondente existe.</p>
+    </div>
+
+    <div class="machine"><canvas id="fx"></canvas><div class="core"><div><b id="core">OFF</b><div class="sub" id="coreSub">parado</div></div></div></div>
+
+    <div class="controls">
+      <div class="wallet"><input id="wallet" placeholder="Cole seu endereço público XMR"><button class="btn alt" onclick="saveWallet()">Salvar carteira</button></div>
+      <button class="btn big" id="main" onclick="mainAction()">COMEÇAR A MINERAR</button>
+
+      <div class="metrics">
+        <div class="metric"><small>Hash local real</small><b class="g" id="local">—</b></div>
+        <div class="metric"><small>Hash efetivo do pool</small><b id="eff">—</b></div>
+        <div class="metric"><small>Shares desta sessão</small><b class="ok" id="shares">0</b></div>
+        <div class="metric"><small>Estado real</small><b id="state">Parado</b></div>
+        <div class="metric"><small>Saldo devido no pool</small><b class="ok" id="due">—</b></div>
+        <div class="metric"><small>XMR agora</small><b id="price">—</b></div>
+        <div class="metric"><small>Ritmo estimado</small><b id="rateTop">—</b></div>
+        <div class="metric"><small>Confiança da ETA</small><b id="conf">—</b></div>
+      </div>
+
+      <div class="realbox">
+        <div><small>Ganho REAL desta sessão no pool</small><b id="sessionEarned">0.000000000000 XMR</b></div>
+        <div><small>Lucro líquido estimado / dia</small><b id="dayNet">—</b><div class="sub" id="costQualifier"></div></div>
+      </div>
+
+      <div class="eta">
+        <div class="sub">PRÓXIMO INCREMENTO DE PRODUÇÃO ESTIMADO</div>
+        <div class="g" id="target">AGUARDANDO RITMO REAL</div>
+        <div class="clock" id="clock">AGUARDANDO DADOS…</div>
+        <div class="sub" id="range">O relógio só inicia quando existe uma taxa calculável.</div>
+        <div class="etaGrid">
+          <div class="mini"><span>Quantidade do próximo incremento</span><b id="quantum">—</b></div>
+          <div class="mini"><span>Falta para esse incremento</span><b id="remain">—</b></div>
+          <div class="mini"><span>Próxima share média</span><b id="shareEta">—</b></div>
+        </div>
+        <div class="sub" id="etaNote" style="margin-top:9px">ETA de produção equivalente. O crédito do PPLNS pode aparecer no pool em blocos, não a cada segundo.</div>
+      </div>
+
+      <div class="notice" id="msg">Salve sua carteira pública XMR. Nunca use seed ou chave privada aqui.</div>
+      <button class="btn alt" style="width:100%;margin-top:8px" onclick="openPool()">VER SALDO NO MONEROOCEAN</button>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <section class="card pad">
+      <div class="title"><h3>Estimativa de rendimento</h3><small id="power">consumo —</small></div>
+      <table><thead><tr><th>Tempo</th><th>XMR estimado</th><th>Bruto R$</th><th>Custos</th><th>Líquido</th></tr></thead><tbody id="rows"></tbody></table>
+      <div class="sub" id="breakEven" style="margin-top:9px">Aguardando taxa + preço.</div>
+    </section>
+
+    <section class="card pad">
+      <div class="title"><h3>Diagnóstico GoldBrain</h3><small>fontes reais</small></div>
+      <div class="list">
+        <div class="item"><div><b>Minerador</b><span id="engine">—</span></div><div class="tag" id="verified">OFF</div></div>
+        <div class="item"><div><b>Telemetria local</b><span id="telemetry">—</span></div><div class="tag" id="telemetryTag">—</div></div>
+        <div class="item"><div><b>Huge Pages / MSR</b><span id="memoryDiag">—</span></div><div class="tag" id="memoryTag">—</div></div>
+        <div class="item"><div><b>GPU</b><span id="gpuText">Auto não força RX 460 em RandomX</span></div><div class="tag" id="gpu">AUTO</div></div>
+        <div class="item"><div><b>Pool</b><span id="poolFresh">—</span></div><div class="tag" id="poolTag">—</div></div>
+        <div class="item"><div><b>Preço</b><span id="marketSource">—</span></div><div class="tag" id="marketTag">—</div></div>
+        <div class="item"><div><b>Monte Carlo 30d</b><span id="risk">Aguardando taxa + preço</span></div><div class="tag" id="riskTag">—</div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card pad">
+    <div class="title"><h3>Ajustes avançados</h3><small>pode ignorar</small></div>
+    <details class="advanced">
+      <summary>Mostrar configurações</summary>
+      <div class="form">
+        <div class="field"><label>Energia R$/kWh</label><input id="electricity" type="number" step=".01"></div>
+        <div class="field"><label>Modo do minerador</label><select id="engineMode"><option value="stable">Estável imediato (recomendado)</option><option value="advanced">Auto-switch avançado (calibra primeiro)</option></select></div>
+        <div class="field"><label>Desempenho CPU</label><select id="performance"><option value="max">Máximo</option><option value="smart">Inteligente</option></select></div>
+        <div class="field"><label>GPU</label><select id="gpuMode"><option value="auto">Automático seguro</option><option value="on">Forçar OpenCL</option><option value="off">Desligada</option></select></div>
+        <div class="field"><label>CPU %</label><input id="cpuPercent" type="number" min="25" max="100"></div>
+        <div class="field"><label>Watts MEDIDOS na tomada (0 = estimar)</label><input id="watts" type="number" min="0"></div>
+      </div>
+      <button class="btn alt" style="margin-top:8px" onclick="saveSettings()">Salvar ajustes</button>
+      <button class="btn alt" style="margin-top:8px" onclick="restartMiner()">Reiniciar minerador</button>
+    </details>
+    <div class="sub" id="sources" style="margin-top:10px"></div>
+    <div class="sub" id="cloud" style="margin-top:5px"></div>
+  </section>
+
+  <div class="footer">“Real” significa que o painel informa a origem de cada dado e não inventa zero/cronômetro quando a fonte falha. ETA e lucro continuam sendo projeções estatísticas do futuro, nunca promessa de pagamento.</div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+let S=null,busy=false,eta=null,particles=[],raf=0;
+const $=id=>document.getElementById(id);
+const brl=(n,d=2)=>Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:d,maximumFractionDigits:d});
+const xmr=(n,d=12)=>Number(n).toFixed(d)+' XMR';
+function hash(n){n=Number(n);if(!(n>0))return'—';return n>=1e6?(n/1e6).toFixed(2)+' MH/s':n>=1e3?(n/1e3).toFixed(2)+' kH/s':n.toFixed(0)+' H/s'}
+function duration(s){if(!Number.isFinite(Number(s))||Number(s)<0)return'—';s=Math.max(0,Math.round(Number(s)));const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60),q=s%60;return(d?d+'d ':'')+String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m '+String(q).padStart(2,'0')+'s'}
+function toast(text){$('toast').textContent=text;$('toast').className='toast show';setTimeout(()=>$('toast').className='toast',3500)}
+async function api(url,opt={}){const r=await fetch(url,{headers:{'content-type':'application/json'},...opt});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Erro');return d}
+async function refresh(){try{S=await api('/api/simple/status');$('server').textContent='IdeaGold '+S.version+' online';render()}catch(e){$('server').textContent='servidor offline'}}
+
+function syncSettings(){
+  const s=S?.settings||{};
+  if(document.activeElement!==$('wallet'))$('wallet').value=S?.walletFull||'';
+  if(document.activeElement!==$('electricity'))$('electricity').value=s.electricity??.90;
+  if(document.activeElement!==$('engineMode'))$('engineMode').value=s.engineMode||'stable';
+  if(document.activeElement!==$('performance'))$('performance').value=s.performanceMode||'max';
+  if(document.activeElement!==$('gpuMode'))$('gpuMode').value=s.gpuMode||'auto';
+  if(document.activeElement!==$('cpuPercent'))$('cpuPercent').value=s.cpuThreadsPercent??75;
+  if(document.activeElement!==$('watts'))$('watts').value=s.measuredPowerWatts??0;
+}
+function payload(includeWallet=false){
+  const p={
+    electricity:Number($('electricity').value),
+    engineMode:$('engineMode').value,
+    performanceMode:$('performance').value,
+    gpuMode:$('gpuMode').value,
+    cpuThreadsPercent:Number($('cpuPercent').value),
+    measuredPowerWatts:Number($('watts').value)
+  };
+  if(includeWallet)p.wallet=$('wallet').value;
+  return p;
+}
+function stateCopy(state){
+  return {
+    stopped:['PARADO','Parado',''],
+    starting:['INICIANDO','Iniciando minerador…','blue'],
+    calibrating:['CALIBRANDO','Calibrando algoritmos; ainda não conte como mineração.','g'],
+    hashing:['MINERANDO','Hashrate local confirmado.','ok'],
+    'pool-confirmed':['MINERANDO','Pool confirmou hashrate recente.','ok'],
+    stalled:['SEM HASH','Processo aberto, mas sem hashrate confirmado.','bad']
+  }[state]||['—','Estado desconhecido',''];
+}
+function render(){
+  if(!S)return;
+  syncSettings();
+  const state=S.miner.state||'stopped',copy=stateCopy(state),processRunning=!!S.miner.processRunning,mining=!!S.miner.mining;
+  $('headline').textContent=mining?'Você está minerando de verdade.':state==='calibrating'?'O otimizador está calibrando.':state==='stalled'?'O minerador abriu, mas não está entregando hash.':'Pronto para minerar.';
+  $('core').textContent=copy[0];$('core').className=copy[2];$('coreSub').textContent=copy[1];
+  $('local').textContent=hash(S.miner.hashrate);
+  $('eff').textContent=S.pool?.fresh?hash(S.miner.effectiveHashrate):'—';
+  $('shares').textContent=S.session?.acceptedShares??0;
+  $('state').textContent=copy[0];$('state').className=copy[2];
+  $('due').textContent=S.pool?xmr(S.pool.dueXmr,12):'—';
+  $('price').textContent=S.market?.xmrBRL>0?brl(S.market.xmrBRL):'—';
+  $('rateTop').textContent=S.estimator?.available?xmr(S.estimator.xmrPerHour,12)+'/h':'—';
+  $('conf').textContent=S.estimator?.available?Math.round((S.estimator.confidence||0)*100)+'%':'—';
+  $('sessionEarned').textContent=xmr(S.session?.earnedXmrReal||0,12);
+
+  const day=S.profit?.available?S.profit?.periods?.day:null;
+  $('dayNet').textContent=day?brl(day.netBrl):'—';
+  $('dayNet').className=day?(day.netBrl>=0?'ok':'bad'):'';
+  $('costQualifier').textContent=S.profit?.powerSource==='measured'?'energia baseada em watts medidos':'energia usa watts estimados; informe wattímetro para custo real';
+
+  const b=$('main');b.disabled=busy;b.textContent=busy?'PROCESSANDO…':processRunning?'PARAR MINERAÇÃO':S.miner.installed?'COMEÇAR A MINERAR':'INSTALAR E COMEÇAR';b.className='btn big'+(processRunning?' stop':'');
+
+  const msg=$('msg');
+  if(state==='hashing'||state==='pool-confirmed'){msg.className='notice ok';msg.textContent=`Hash confirmado. ${hash(S.miner.hashrate)} local • ${S.pool?.fresh?hash(S.miner.effectiveHashrate)+' efetivo no pool':'pool aguardando janela de 10 min'} • ${S.miner.algo||'rx/0'}.`}
+  else if(state==='calibrating'){msg.className='notice info';msg.textContent='O modo avançado está fazendo benchmark. Isso não é contado como mineração enquanto o hashrate não aparecer. '+(S.miner.diagnostics?.calibrationText||'')}
+  else if(state==='starting'){msg.className='notice info';msg.textContent='Minerador iniciou. Aguardando a primeira leitura real de hashrate.'}
+  else if(state==='stalled'){msg.className='notice bad';msg.textContent='Processo do minerador está aberto, mas o IdeaGold não encontrou hashrate pela API nem pelo log. Use “Reiniciar minerador” ou volte para Modo Estável.'}
+  else{msg.className='notice';msg.textContent=S.configured?'Carteira salva. Clique para começar.':'Salve sua carteira pública XMR.'}
+
+  renderEta();renderProfit();renderDiagnostics();animate(mining||state==='calibrating',S.miner.hashrate||S.miner.effectiveHashrate);
+}
+function renderEta(){
+  const n=S.estimator?.nextGain;
+  if(!S.estimator?.available||!n?.available){
+    eta=null;$('target').textContent='AGUARDANDO RITMO REAL';$('clock').textContent='AGUARDANDO DADOS…';$('range').textContent='O relógio só inicia quando existe hashrate/pool suficiente para calcular uma taxa.';$('quantum').textContent='—';$('remain').textContent='—';$('shareEta').textContent=S.estimator?.shareEta?duration(S.estimator.shareEta.meanSec):'—';return;
+  }
+  $('target').textContent='Próximo +'+xmr(n.quantumXmr,12);
+  $('quantum').textContent=xmr(n.quantumXmr,12);
+  $('remain').textContent=xmr(n.remainingXmr,12);
+  $('shareEta').textContent=S.estimator?.shareEta?duration(S.estimator.shareEta.meanSec):'aguardando dificuldade da share';
+  eta={value:Number(n.expectedSec),at:performance.now()};
+  $('clock').textContent=duration(n.expectedSec);
+  $('range').textContent='Faixa estatística: '+duration(n.optimisticSec)+' até '+duration(n.conservativeSec)+' • confiança '+Math.round((S.estimator.confidence||0)*100)+'%';
+  $('etaNote').textContent=n.source==='incremento_observado_pool'
+    ?'Quantidade baseada no tamanho dos incrementos que o pool já creditou nesta sessão. O horário continua sendo estatístico.'
+    :'Quantidade escolhida dinamicamente a partir do ritmo atual, não de um valor fixo. O crédito PPLNS pode chegar em blocos.';
+}
+function renderProfit(){
+  const names={hour:'1 hora',day:'24 horas',week:'7 dias',month:'30 dias'},body=$('rows');body.innerHTML='';
+  for(const key of Object.keys(names)){
+    const p=S.profit?.available?S.profit?.periods?.[key]:null,tr=document.createElement('tr');
+    tr.innerHTML=p?`<td>${names[key]}</td><td>${Number(p.grossXmr).toFixed(12)}</td><td>${brl(p.grossBrl,key==='hour'?4:2)}</td><td>${brl(Number(p.energyBrl||0)+Number(p.cloudBrl||0),key==='hour'?4:2)}</td><td class="${p.netBrl>=0?'ok':'bad'}"><b>${brl(p.netBrl,key==='hour'?4:2)}</b></td>`:`<td>${names[key]}</td><td>—</td><td>—</td><td>—</td><td>—</td>`;
+    body.appendChild(tr);
+  }
+  if(S.profit?.powerWatts>0)$('power').textContent=`consumo ${Number(S.profit.powerWatts).toFixed(0)} W • ${S.profit.powerSource==='measured'?'MEDIDO':'ESTIMADO'}`;else $('power').textContent='consumo —';
+  if(S.profit?.available){
+    $('breakEven').textContent='Energia de equilíbrio: '+(S.profit.breakEvenElectricity==null?'—':brl(S.profit.breakEvenElectricity))+'/kWh • XMR de equilíbrio: '+(S.profit.breakEvenXmrPrice==null?'—':brl(S.profit.breakEvenXmrPrice));
+  }else $('breakEven').textContent='Sem taxa ou preço atual: o IdeaGold não fabrica projeção.';
+}
+function renderDiagnostics(){
+  $('engine').textContent=(S.miner.engine||'—')+' • '+(S.miner.version||'')+(S.settings.engineMode==='advanced'?' • auto-switch':' • RandomX estável');
+  $('verified').textContent=S.miner.verified?'VERIFICADO':'—';$('verified').className='tag '+(S.miner.verified?'ok':'');
+  $('telemetry').textContent=S.miner.telemetrySource==='xmrig-api'?'API local do XMRig':S.miner.telemetrySource==='xmrig-log'?'log real do XMRig':'nenhuma leitura de hashrate';
+  $('telemetryTag').textContent=S.miner.telemetrySource==='none'?'SEM DADO':'OK';$('telemetryTag').className='tag '+(S.miner.telemetrySource==='none'?'bad':'ok');
+  const hp=S.miner.diagnostics?.hugePagesPct,msr=S.miner.diagnostics?.msr;
+  $('memoryDiag').textContent=`Huge Pages ${hp==null?'aguardando':hp+'%'} • MSR ${msr==='ok'?'OK':msr==='error'?'ERRO':'aguardando'} • ${S.miner.diagnostics?.threads||'?'} threads`;
+  $('memoryTag').textContent=hp===100&&msr==='ok'?'OTIMIZADO':hp==null&&msr==='unknown'?'AGUARDE':'VERIFICAR';$('memoryTag').className='tag '+(hp===100&&msr==='ok'?'ok':'');
+  $('gpu').textContent=S.miner.gpuActive?'ATIVA':S.settings.gpuMode==='on'?'SOLICITADA':'AUTO SEGURO';$('gpu').className='tag '+(S.miner.gpuActive?'ok':'');
+  $('gpuText').textContent=S.miner.gpuActive?'OpenCL confirmou hashrate':'GPU não é contada como ativa até existir backend/telemetria real';
+  $('poolFresh').textContent=S.pool?`hash normalizado ${S.pool.fresh?hash(S.pool.normalizedHashrate):'antigo'} • última share ${S.pool.lastHashTs?new Date((S.pool.lastHashTs>1e12?S.pool.lastHashTs:S.pool.lastHashTs*1000)).toLocaleTimeString('pt-BR'):'—'}`:'API do pool indisponível';
+  $('poolTag').textContent=S.pool?.fresh?'RECENTE':'AGUARDANDO';$('poolTag').className='tag '+(S.pool?.fresh?'ok':'');
+  $('marketSource').textContent=S.market?`${S.market.source}${S.market.cached?' • cache recente':''}`:'nenhuma fonte de preço disponível';
+  $('marketTag').textContent=S.market?.xmrBRL>0?'OK':'SEM PREÇO';$('marketTag').className='tag '+(S.market?.xmrBRL>0?'ok':'bad');
+  const risk=S.profit?.risk;if(risk){$('risk').textContent=`P10 ${brl(risk.p10)} • mediana ${brl(risk.median)} • P90 ${brl(risk.p90)}`;$('riskTag').textContent=Math.round(risk.probabilityProfit*100)+'% cenários +';}else{$('risk').textContent='Aguardando taxa + preço';$('riskTag').textContent='—'}
+  const sources=S.estimator?.sources||[];$('sources').textContent='Fontes da taxa: '+(sources.length?sources.map(x=>`${x.name} ${Math.round(x.weight*100)}%`).join(' • '):'nenhuma ainda')+'.';
+  $('cloud').textContent=`Workers autorizados online ${S.workers?.online||0} • hash remoto ${hash(S.workers?.hashrate||0)} • custo cloud ${brl(S.profit?.cloudCostBrlDay||0)}/dia.`;
+}
+async function saveWallet(){try{await api('/api/simple/wallet',{method:'POST',body:JSON.stringify(payload(true))});toast('Carteira salva.');await refresh()}catch(e){toast(e.message)}}
+async function saveSettings(){try{await api('/api/simple/settings',{method:'POST',body:JSON.stringify(payload())});toast('Ajustes salvos. Reinicie o minerador para aplicar modo/CPU/GPU.');await refresh()}catch(e){toast(e.message)}}
+async function restartMiner(){try{busy=true;render();await api('/api/simple/restart',{method:'POST',body:'{}'});toast('Minerador reiniciado.')}catch(e){toast(e.message)}finally{busy=false;setTimeout(refresh,1200)}}
+async function mainAction(){if(busy)return;try{busy=true;render();if(!S.configured)throw new Error('Salve a carteira primeiro.');if(S.miner.processRunning)await api('/api/simple/stop',{method:'POST',body:'{}'});else{await api('/api/simple/install',{method:'POST',body:'{}'});await api('/api/simple/start',{method:'POST',body:'{}'})}}catch(e){toast(e.message)}finally{busy=false;setTimeout(refresh,1000)}}
+function openPool(){if(S?.walletFull)window.open('https://moneroocean.stream/?addr='+encodeURIComponent(S.walletFull),'_blank','noopener')}
+function tick(){if(!eta)return;const left=eta.value-(performance.now()-eta.at)/1000;if(left<=0){$('clock').textContent='RECALCULANDO…';eta=null;setTimeout(refresh,500)}else $('clock').textContent=duration(left)}
+function animate(on,h){const c=$('fx'),x=c.getContext('2d'),d=devicePixelRatio||1,w=c.clientWidth,q=c.clientHeight;if(c.width!==w*d||c.height!==q*d){c.width=w*d;c.height=q*d;x.setTransform(d,0,0,d,0,0);particles=[]}if(!particles.length)for(let i=0;i<55;i++)particles.push({a:Math.random()*6.28,r:25+Math.random()*95,s:.002+Math.random()*.008,z:1+Math.random()*2});cancelAnimationFrame(raf);const speed=Math.max(.2,Math.min(3,Math.log10(Math.max(10,Number(h)||10))/2.5));const go=()=>{x.clearRect(0,0,w,q);for(const p of particles){p.a+=on?p.s*speed:p.s*.1;const px=w/2+Math.cos(p.a)*p.r,py=q/2+Math.sin(p.a)*p.r*.55;x.beginPath();x.arc(px,py,p.z,0,6.28);x.fillStyle=on?'rgba(242,203,97,.75)':'rgba(150,150,140,.15)';x.fill()}raf=requestAnimationFrame(go)};go()}
+refresh();setInterval(refresh,4000);setInterval(tick,1000);
+</script>
+</body>
+</html>

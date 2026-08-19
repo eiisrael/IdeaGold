@@ -1,19 +1,17 @@
 {
   "name": "ideagold",
-  "version": "3.0.0",
+  "version": "4.1.0",
   "private": true,
-  "description": "IdeaGold 3.0: mineração XMR em um clique, XMRig verificado, telemetria e Profit Guard.",
-  "main": "server.js",
+  "description": "IdeaGold 4.1 GoldBrain Real: mineração XMR em um clique com estado real, ETA dinâmica, fallback de preço, CPU otimizada e workers autorizados.",
+  "main": "server-v4.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start": "node server-v4.js",
+    "dev": "node --watch server-v4.js",
     "worker": "node worker-agent.js",
-    "check": "node --check server.js && node --check worker-agent.js"
+    "check": "node --check server-v4.js && node --check worker-agent.js && node --check lib/goldbrain.js",
+    "test": "node test/goldbrain.test.js"
   },
   "engines": {
     "node": ">=20"
-  },
-  "dependencies": {
-    "ccxt": "^4.5.0"
   }
 }
