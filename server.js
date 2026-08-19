@@ -151,20 +151,42 @@ async function market(){
   const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=monero&vs_currencies=brl,usd&include_24hr_change=true',{headers:{accept:'application/json','user-agent':'IdeaGold/3.0'},signal:AbortSignal.timeout(8000)});
   if(!r.ok)throw new Error(`Mercado HTTP ${r.status}`);const d=await r.json();marketCache.at=Date.now();marketCache.data=d;return d;
 }
+async function networkStats(){
+  try{
+    const r=await fetch('https://api.moneroocean.stream/network/stats',{headers:{accept:'application/json','user-agent':'IdeaGold/3.0'},signal:AbortSignal.timeout(5000)});
+    if(!r.ok)return null;
+    const d=await r.json();
+    const difficulty=Number(d.difficulty||0);
+    let reward=Number(d.value||0);
+    if(reward>1000000) reward=reward/1e12;
+    if(!(reward>0&&reward<10)) reward=0.6;
+    return {difficulty,reward,height:Number(d.height||d.main_height||0)};
+  }catch{return null}
+}
 function mapPool(d){
   if(!d)return null;
   const pick=(...ks)=>{for(const k of ks)if(d[k]!==undefined&&d[k]!==null)return Number(d[k])||0;return 0};
   return {hashrate:pick('hash','hash2','hashrate'),totalHashes:pick('totalHash','totalHashes'),validShares:pick('validShares','valid'),invalidShares:pick('invalidShares','invalid'),dueAtomic:pick('amtDue','amountDue','balance'),paidAtomic:pick('amtPaid','amountPaid','paid'),raw:d};
 }
-function monteCarlo({hashrate,price,electricity,powerWatts=115,days=30}){
-  const sims=4000, out=[]; const baseRevenuePerDay=(hashrate/1950)*0.0018*price;
+function monteCarlo({hashrate,price,electricity,difficulty,reward=0.6,powerWatts=115,days=30}){
+  if(!(hashrate>0&&price>0&&difficulty>0)) return null;
+  const sims=4000, out=[], donateFactor=0.99;
   for(let i=0;i<sims;i++){
-    let p=price, rev=0;
-    for(let d=0;d<days;d++){const shock=(Math.random()+Math.random()+Math.random()+Math.random()-2)*0.035;p=Math.max(0,p*(1+shock));const diffNoise=0.90+Math.random()*0.20;rev+=(baseRevenuePerDay*(p/price))/diffNoise;}
-    const cost=(powerWatts/1000)*24*days*electricity; out.push(rev-cost);
+    let p=price, diff=difficulty, rev=0;
+    for(let day=0;day<days;day++){
+      const priceShock=(Math.random()+Math.random()+Math.random()+Math.random()-2)*0.035;
+      const diffShock=(Math.random()+Math.random()+Math.random()+Math.random()-2)*0.018;
+      p=Math.max(0,p*(1+priceShock));
+      diff=Math.max(1,diff*(1+diffShock));
+      const coins=(hashrate*86400/diff)*reward*donateFactor;
+      rev+=coins*p;
+    }
+    const cost=(powerWatts/1000)*24*days*electricity;
+    out.push(rev-cost);
   }
   out.sort((a,b)=>a-b); const q=x=>out[Math.min(out.length-1,Math.floor(x*out.length))];
-  return {p10:q(.10),median:q(.50),p90:q(.90),lossProbability:out.filter(x=>x<0).length/out.length,simulations:sims};
+  const expectedCoinsDay=(hashrate*86400/difficulty)*reward*donateFactor;
+  return {p10:q(.10),median:q(.50),p90:q(.90),lossProbability:out.filter(x=>x<0).length/out.length,simulations:sims,expectedCoinsDay,powerWatts};
 }
 async function simpleStatus(){
   const user=userConfig(), meta=minerMeta(), proc=readJson(path.join(RUNTIME_DIR,'process.json'),{});
@@ -172,13 +194,16 @@ async function simpleStatus(){
   const h=sum?.hashrate?.total||[]; const conn=sum?.connection||{};
   let mkt=null;try{mkt=await market()}catch{}
   let ps=null;try{ps=mapPool(await poolStats(user.wallet))}catch{}
+  let net=null;try{net=await networkStats()}catch{}
   const xmrBRL=Number(mkt?.monero?.brl||0);
   const hashrate=Number(h[0]||ps?.hashrate||0);
-  const risk=monteCarlo({hashrate,price:xmrBRL||1800,electricity:Number(user.electricity||.90)});
+  const risk=monteCarlo({hashrate,price:xmrBRL,electricity:Number(user.electricity||.90),difficulty:Number(net?.difficulty||0),reward:Number(net?.reward||0.6)});
   return {
     version:'3.0.0',configured:validXmrAddress(user.wallet),wallet:maskWallet(user.wallet),walletFull:user.wallet||'',electricity:user.electricity||.90,threads:user.threads||3,
     miner:{installed:Boolean(meta.installed&&meta.exe&&fs.existsSync(meta.exe)),version:meta.version||null,verified:Boolean(meta.verified),running,pid:proc.pid||null,hashrate,hashrate60s:Number(h[1]||0),hashrate15m:Number(h[2]||0),accepted:Number(conn.accepted||ps?.validShares||0),rejected:Number(conn.rejected||ps?.invalidShares||0),uptime:Number(sum?.uptime||0),pool:conn.pool||`${POOL_HOST}:${POOL_PORT}`},
-    pool:ps,market:{xmrBRL,xmrUSD:Number(mkt?.monero?.usd||0),change24h:Number(mkt?.monero?.brl_24h_change||0)},risk
+    pool:ps?{...ps,dueXmr:Number(ps.dueAtomic||0)/1e12,paidXmr:Number(ps.paidAtomic||0)/1e12}:null,
+    network:net,
+    market:{xmrBRL,xmrUSD:Number(mkt?.monero?.usd||0),change24h:Number(mkt?.monero?.brl_24h_change||0)},risk
   };
 }
 function serveStatic(res,urlPath){
@@ -193,11 +218,11 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET'&&serveStatic(res,u.pathname))return;
     if(req.method==='GET'&&u.pathname==='/api/health')return sendJson(res,200,{ok:true,name:'IdeaGold',version:'3.0.0',time:new Date().toISOString()});
     if(req.method==='GET'&&u.pathname==='/api/simple/status')return sendJson(res,200,await simpleStatus());
-    if(req.method==='POST'&&u.pathname==='/api/simple/wallet'){requireLocal(req);return sendJson(res,200,{ok:true,user:saveUser(await readBody(req))});}
-    if(req.method==='POST'&&u.pathname==='/api/simple/install'){requireLocal(req);return sendJson(res,200,{ok:true,miner:await installXmrig()});}
-    if(req.method==='POST'&&u.pathname==='/api/simple/start'){requireLocal(req);return sendJson(res,200,{ok:true,result:await startMiner()});}
-    if(req.method==='POST'&&u.pathname==='/api/simple/stop'){requireLocal(req);return sendJson(res,200,{ok:true,result:stopMiner()});}
-    if(req.method==='POST'&&u.pathname==='/api/simple/settings'){requireLocal(req);const b=await readBody(req);const cur=userConfig();return sendJson(res,200,{ok:true,user:saveUser({...cur,...b,wallet:cur.wallet})});}
+    if(req.method==='POST'&&u.pathname==='/api/simple/wallet'){requireLocal(req);return sendJson(res,200,{ok:true,user:saveUser(await readBody(req))});
+    if(req.method==='POST'&&u.pathname==='/api/simple/install'){requireLocal(req);return sendJson(res,200,{ok:true,miner:await installXmrig()});
+    if(req.method==='POST'&&u.pathname==='/api/simple/start'){requireLocal(req);return sendJson(res,200,{ok:true,result:await startMiner()});
+    if(req.method==='POST'&&u.pathname==='/api/simple/stop'){requireLocal(req);return sendJson(res,200,{ok:true,result:stopMiner()});
+    if(req.method==='POST'&&u.pathname==='/api/simple/settings'){requireLocal(req);const b=await readBody(req);const cur=userConfig();return sendJson(res,200,{ok:true,user:saveUser({...cur,...b,wallet:cur.wallet})});
     return sendJson(res,404,{error:'Rota não encontrada'});
   }catch(e){console.error(e);sendJson(res,e.status||500,{error:e.message||'Erro interno'})}
 });
