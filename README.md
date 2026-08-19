@@ -29,7 +29,7 @@ Requisito: Node.js **22.5+**. Node 26 é suportado.
 frontend/
   index.html, styles.css, app.js
 backend/
-  server.js, settings.js
+  server.js, settings.js, worker-auth.js
 miner/
   xmrig-controller.js, config-manager.js
 telemetry/
@@ -38,14 +38,15 @@ providers/
   hardware/, power/, market/, pool/
 optimizer/
   supreme-mind.js, benchmark-engine.js, bayesian-optimizer.js,
-  statistics.js, safety-engine.js, anomaly-detector.js, scoring.js
+  statistics.js, safety-engine.js, anomaly-detector.js, scoring.js,
   bandit.js, profit-engine.js
 database/
-  db.js
+  db.js, workers.js
+worker-agent.js
 scripts/
   check.js
 tests/
-  run.js
+  run.js, workers.js, smoke-server.js
 docs/
   documentação técnica
 ```
@@ -64,7 +65,7 @@ docs/
 - accepted/rejected da sessão.
 - hash efetivo e saldo do pool quando o adapter fornece.
 - ganho real = `(saldo devido + pago atual) - baseline da sessão`.
-- SQLite guarda sessões, telemetria, benchmarks, decisões, alertas e snapshots.
+- SQLite guarda sessões, telemetria, benchmarks, decisões, alertas, workers e snapshots.
 
 ### Rentabilidade
 - preço XMR: CoinGecko → CryptoCompare → Kraken + Frankfurter → cache recente.
@@ -96,7 +97,26 @@ baseline
 → Last Known Good
 ```
 
-O espaço de busca é sugerido por um Gaussian Process com Expected Improvement. A política UCB1 existe para futura seleção entre perfis com histórico suficiente; não é usada para inventar performance.
+O espaço de busca é sugerido por um Gaussian Process com Expected Improvement. A política UCB1 existe para seleção entre perfis quando houver histórico suficiente; não é usada para inventar performance. O Decision Log registra configuração anterior, candidata, motivo, resultado e confiança. Se o usuário interromper o autotuning, o melhor perfil estável já medido é restaurado.
+
+## Workers LAN / VPS / cloud autorizados
+
+`worker-agent.js` voltou a fazer parte da arquitetura V5 de forma funcional. Ele lê a API **local** do XMRig no worker e envia somente métricas para `/api/workers/heartbeat`.
+
+Proteções:
+
+- autenticação HMAC-SHA256 com `WORKER_SHARED_SECRET`;
+- janela de timestamp de 5 minutos;
+- comparação de assinatura em tempo constante;
+- replay de heartbeat rejeitado durante a janela ativa;
+- payload limitado e normalizado;
+- estado e último heartbeat persistidos em SQLite;
+- worker é considerado offline após 45 segundos sem heartbeat;
+- nenhuma execução remota de shell/comando é oferecida pelo servidor.
+
+Para usar outro PC da LAN, gere um segredo forte, use o mesmo segredo no servidor e worker e altere `HOST=0.0.0.0` **somente se necessário**, protegendo a porta 8080 no firewall. Para uso em um único PC, mantenha `HOST=127.0.0.1`.
+
+O hash/potência de workers remotos é exibido como telemetria separada. O IdeaGold não mistura automaticamente um hashrate remoto heterogêneo com o lucro local sem dados econômicos comparáveis, evitando criar uma rentabilidade fictícia.
 
 ## Pools
 
@@ -117,7 +137,9 @@ Temperatura também permanece `indisponível` quando o Windows/hardware não for
 ## Segurança
 
 - backend em localhost por padrão;
-- endpoints de alteração exigem origem loopback;
+- endpoints de alteração do minerador exigem origem loopback;
+- heartbeat remoto aceita apenas worker autenticado por HMAC;
+- logs administrativos só são servidos para loopback;
 - XMRig HTTP API em localhost;
 - somente endereço público XMR é necessário;
 - seed phrase/private spend key nunca são solicitadas;
@@ -130,11 +152,13 @@ Consulte `docs/SECURITY.md`.
 ## Validação
 
 ```bash
+npm ci
 npm run check
 npm test
+npm run test:smoke
 ```
 
-Os testes cobrem estatística, ETA probabilística, energia, break-even, configuração, Safety Engine, pool score, Bayesian Optimizer e persistência SQLite.
+Os testes cobrem estatística, ETA probabilística, energia, break-even, configuração, Safety Engine, pool score, Bayesian Optimizer, persistência SQLite, autenticação/registro de workers e inicialização real do backend. O smoke test sobe o servidor em uma porta temporária, consulta `/api/health`, envia um heartbeat HMAC e confirma o worker no registro SQLite.
 
 ## Limites reais
 
