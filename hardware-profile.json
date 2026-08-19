@@ -1,0 +1,89 @@
+{
+  "id": "sniper-haswell-rx460-2026-08",
+  "label": "SNIPER • i5-4670K + RX 460 4 GB",
+  "generatedFor": "IdeaGold 2.1",
+  "hardware": {
+    "computer": "SNIPER",
+    "board": "Gigabyte G1.Sniper H6",
+    "memoryGB": 23.72,
+    "os": "Windows 10 Pro 19045"
+  },
+  "energy": {
+    "defaultTariffBrlKwh": 0.9,
+    "estimatedBaseSystemWatts": 50,
+    "measurementStatus": "wattmeter-not-provided",
+    "note": "BaseSystemWatts e potências de CPU/GPU são estimativas até haver medição na tomada."
+  },
+  "cpu": {
+    "name": "Intel Core i5-4670K",
+    "architecture": "Haswell",
+    "cores": 4,
+    "threads": 4,
+    "l3CacheMB": 6,
+    "randomx": {
+      "recommendedThreads": 3,
+      "referenceHashrateHs": 1950,
+      "validatedRangeHs": [1769, 2018],
+      "estimatedCpuPowerWatts": 65,
+      "hugePages": true,
+      "msr": true,
+      "initAvx2": true,
+      "source": {
+        "type": "XMRig validated benchmarks",
+        "url": "https://xmrig.com/benchmark?cpu=Intel%28R%29+Core%28TM%29+i5-4670K+CPU+%40+3.40GHz",
+        "checked": "2026-08-19"
+      }
+    }
+  },
+  "gpu": {
+    "name": "Radeon RX 460",
+    "vramGB": 4,
+    "architecture": "Polaris/Baffin",
+    "driver": "31.0.21924.61",
+    "referenceAutolykos2": {
+      "miner": "lolMiner",
+      "algorithm": "Autolykos2",
+      "referenceHashrateHs": 29070000,
+      "powerWatts": 47,
+      "requiresBenchmark": true,
+      "source": {
+        "type": "Minerstat hardware reference + lolMiner RX400 support",
+        "checked": "2026-08-19"
+      }
+    },
+    "sha3x": {
+      "miner": "lolMiner",
+      "supported": true,
+      "requiresBenchmark": true,
+      "note": "lolMiner added Tari SHA3X support for AMD RX 400 series and newer."
+    },
+    "fishhash": {
+      "miner": "lolMiner",
+      "supported": true,
+      "requiresBenchmark": true
+    },
+    "kawpow": {
+      "supported": false,
+      "reason": "Current reference DAG is ~5.625 GB, above the installed 4 GB VRAM.",
+      "referenceHashrateHs": 4860000,
+      "referencePowerWatts": 45
+    },
+    "randomx": {
+      "enabledByDefault": false,
+      "reason": "RandomX is CPU-oriented; this profile prioritizes the RX 460 for GPU-oriented algorithms."
+    }
+  },
+  "optimizer": {
+    "energyModes": ["dedicated", "incremental"],
+    "defaultHoursPerDay": 24,
+    "defaultUptimePct": 98,
+    "defaultPoolFeePct": 1,
+    "rules": [
+      "Never mine when expected net BRL/day <= 0.",
+      "Prefer measured hashrate over reference hashrate.",
+      "Prefer measured wall power over estimated power.",
+      "Block algorithms whose current memory requirement exceeds VRAM.",
+      "Do not auto-start or remotely execute miners."
+    ]
+  }
+}
